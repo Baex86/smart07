@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../../../lib/supabaseClient';
 import { Loader2, User, Users, MapPin, CreditCard, Phone, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
