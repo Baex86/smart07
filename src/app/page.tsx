@@ -1,69 +1,137 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { setAuthCookies } from './actions/auth';
+import Link from 'next/link';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    noWa: '',
+    password: '',
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === 'noWa' && !/^\d*$/.test(value)) return;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    if (formData.noWa.length < 10) {
+      setErrorMessage('Nomor WA tidak valid.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.rpc('login_user', {
+        p_no_wa: formData.noWa,
+        p_password: formData.password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const result = await setAuthCookies(data);
+      router.push(result.redirectTo);
+
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Kredensial tidak valid atau terjadi kesalahan.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen flex items-center justify-center p-4 bg-ivory-200">
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md bg-ivory-50 p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-ivory-300"
+      >
+        {/* Typografi direvisi: Full Sans-Serif dengan kontras ala Old Money */}
+        <div className="text-center mb-10">
+  <h1 className="text-4xl font-extrabold text-navy-900 tracking-tighter mb-3">SMART O7</h1>
+  <p className="text-navy-500 text-[10px] font-bold uppercase leading-relaxed text-wrap">
+    Sistem RT pintar RT 07 RW 06 Griya Permata Meri, Mojokerto
+  </p>
+</div>
+
+        {errorMessage && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            className="mb-6 p-4 bg-red-50/50 text-red-600 text-sm rounded-lg border border-red-100 text-center"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+            {errorMessage}
+          </motion.div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-navy-700 mb-2">Nomor WhatsApp</label>
+            <input
+              type="tel"
+              name="noWa"
+              value={formData.noWa}
+              onChange={handleChange}
+              placeholder="628123456789"
+              required
+              className="w-full px-4 py-3 border border-ivory-400 rounded-xl bg-white text-navy-900 placeholder:text-navy-200 focus:outline-none focus:ring-2 focus:ring-navy-300 transition-all duration-300"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div className="relative">
+            <label className="block text-sm font-semibold text-navy-700 mb-2">Kata Sandi</label>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+              className="w-full px-4 py-3 border border-ivory-400 rounded-xl bg-white text-navy-900 placeholder:text-navy-200 focus:outline-none focus:ring-2 focus:ring-navy-300 transition-all duration-300 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-[38px] text-navy-300 hover:text-navy-600 transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3.5 mt-2 bg-navy-800 text-ivory-50 rounded-xl font-medium tracking-wide hover:bg-navy-700 active:scale-[0.98] transition-all duration-300 flex items-center justify-center disabled:opacity-70 disabled:active:scale-100 shadow-md shadow-navy-900/10"
           >
-            Documentation
-          </a>
+            {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : 'Masuk ke Portal'}
+          </button>
+        </form>
+        
+        <div className="mt-8 text-center text-sm text-navy-400 font-medium">
+          Belum terdaftar sebagai warga?{' '}
+          <Link href="/daftar" className="text-gold font-bold hover:text-gold-light transition-colors">
+            Registrasi
+          </Link>
         </div>
-      </main>
+      </motion.div>
     </div>
   );
 }
