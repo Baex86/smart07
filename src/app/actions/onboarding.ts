@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { supabase } from '../../lib/supabaseclient';
+import { supabase } from '../../lib/supabaseClient';
 
 export async function submitOnboarding(formData: any) {
   const cookieStore = await cookies();

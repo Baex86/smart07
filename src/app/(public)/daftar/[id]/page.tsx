@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../../lib/supabaseclient'; // Sesuaikan jumlah ../ jika masih merah, atau pakai '@/lib/supabaseClient'
+import { supabase } from '../../../../lib/supabaseClient'; // Sesuaikan jumlah ../ jika masih merah, atau pakai '@/lib/supabaseClient'
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';

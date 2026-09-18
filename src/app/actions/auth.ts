@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { supabase } from '@/lib/supabaseClient'; // Import Supabase ditambahkan di sini
 
 export async function setAuthCookies(data: any) {
   const cookieStore = await cookies();
@@ -37,6 +38,23 @@ export async function setAuthCookies(data: any) {
     }
     return { redirectTo: '/dashboard' };
   }
-
+  
   return { redirectTo: '/' };
+} // Penutup fungsi setAuthCookies
+
+// Fungsi logoutUser TERPISAH di luar
+export async function logoutUser() {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('smart_system_session')?.value;
+
+  if (sessionToken) {
+    // 1. Bunuh token di Database (Supabase) agar tidak bisa dibajak
+    await supabase.from('users').update({ session_token: null }).eq('session_token', sessionToken);
+  }
+
+  // 2. Sapu bersih cookie dari sisi Server
+  cookieStore.delete('smart_system_session');
+  cookieStore.delete('smart_system_uid');
+
+  return { success: true };
 }

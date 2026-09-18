@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1412.33 517.66">
+  <defs>
+    <style>
+      .cls-1 {
+        letter-spacing: .12em;
+      }
+
+      .cls-2 {
+        letter-spacing: .07em;
+      }
+
+      .cls-3 {
+        letter-spacing: .06em;
+      }
+
+      .cls-4 {
+        letter-spacing: .06em;
+      }
+
+      .cls-5 {
+        letter-spacing: .08em;
+      }
+
+      .cls-6 {
+        letter-spacing: -.05em;
+      }
+
+      .cls-7 {
+        font-family: Garamond-Bold, Garamond;
+        font-size: 90.05px;
+      }
+
+      .cls-7, .cls-8 {
+        font-weight: 700;
+      }
+
+      .cls-7, .cls-9 {
+        fill: #fdfbf7;
+      }
+
+      .cls-8 {
+        fill: #b39c66;
+        font-family: QurovaDEMO-Bold, 'Qurova DEMO';
+        font-size: 278.16px;
+      }
+
+      .cls-10 {
+        letter-spacing: .11em;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <g>
+        <text class="cls-8" transform="translate(0 236.43)"><tspan x="0" y="0">Sma</tspan><tspan class="cls-6" x="586.35" y="0">R</tspan><tspan x="767.15" y="0">T</tspan></text>
+        <g>
+          <path class="cls-9" d="M1220.6,125.52c0,68.5-36.06,113.97-97.09,113.97s-97.09-45.46-97.09-113.97,36.06-113.97,97.09-113.97,97.09,45.46,97.09,113.97ZM1092.17,125.52c0,67.41,9.85,98.31,31.34,98.31s31.34-30.9,31.34-98.31-9.85-98.31-31.34-98.31-31.34,30.9-31.34,98.31Z"/>
+          <path class="cls-9" d="M1246.59,16.53h165.74l-39.95,92.25c-13.12,30.5-35.06,98.39-42.98,126.33h-53.23c19.34-31.17,58.92-101.36,72.18-129.64l16.29-34.74h-100.28c-12.52,0-18.85,6.37-23.47,18.79h-3.13l8.84-72.98Z"/>
+        </g>
+      </g>
+      <text class="cls-7" transform="translate(102.29 376.09)"><tspan class="cls-5" x="0" y="0">Sistem Pintar </tspan><tspan class="cls-4" x="633.65" y="0">R</tspan><tspan class="cls-5" x="701.97" y="0">T 07 </tspan><tspan class="cls-2" x="929.35" y="0">R</tspan><tspan class="cls-5" x="998.51" y="0">W 06</tspan><tspan class="cls-5" x="-95.01" y="108.06">Gri</tspan><tspan class="cls-3" x="48.54" y="108.06">y</tspan><tspan class="cls-5" x="96.41" y="108.06">a </tspan><tspan class="cls-4" x="176.47" y="108.06">P</tspan><tspan class="cls-5" x="237.32" y="108.06">e</tspan><tspan class="cls-1" x="286.73" y="108.06">r</tspan><tspan class="cls-5" x="328.67" y="108.06">mata Meri, Mojo</tspan><tspan class="cls-3" x="1076.42" y="108.06">k</tspan><tspan class="cls-5" x="1129.92" y="108.06">e</tspan><tspan class="cls-10" x="1179.34" y="108.06">r</tspan><tspan class="cls-5" x="1220.49" y="108.06">to</tspan></text>
+    </g>
+  </g>
+</svg>
