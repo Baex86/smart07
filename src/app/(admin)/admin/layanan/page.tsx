@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, UserCheck, FileText, MessageSquare, Lightbulb, Database, CheckCircle, XCircle } from 'lucide-react';
-import { supabase } from '../../../../lib/supabaseClient';
+import { supabase } from '../../../../lib/supabaseclient';
 
 type TabType = 'akun' | 'data' | 'surat' | 'aduan' | 'usulan';
 

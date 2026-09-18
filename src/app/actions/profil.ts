@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseclient';
 
 export async function getProfilWarga() {
   const cookieStore = await cookies();

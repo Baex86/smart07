@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { supabase } from '../../../lib/supabaseclient';
 import { useRouter } from 'next/navigation';
 import { Loader2, Plus, Trash2, CheckCircle2, User } from 'lucide-react';
 import { motion } from 'framer-motion';
