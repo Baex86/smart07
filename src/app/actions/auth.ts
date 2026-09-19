@@ -1,11 +1,11 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { supabase } from '@/lib/supabaseClient'; // Import Supabase ditambahkan di sini
+import { supabase } from '@/lib/supabaseClient';
 
 export async function setAuthCookies(data: any) {
   const cookieStore = await cookies();
-  
+
   // Set Cookie untuk Session Token
   cookieStore.set('smart_system_session', data.session_token, {
     httpOnly: true,
@@ -28,7 +28,7 @@ export async function setAuthCookies(data: any) {
   if (data.role === 'admin' || data.role === 'developer') {
     return { redirectTo: '/admin' };
   }
-  
+
   if (data.role === 'warga') {
     if (!data.is_approved) {
       return { redirectTo: '/menunggu-verifikasi' };
@@ -38,11 +38,10 @@ export async function setAuthCookies(data: any) {
     }
     return { redirectTo: '/dashboard' };
   }
-  
-  return { redirectTo: '/' };
-} // Penutup fungsi setAuthCookies
 
-// Fungsi logoutUser TERPISAH di luar
+  return { redirectTo: '/' };
+}
+
 export async function logoutUser() {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('smart_system_session')?.value;

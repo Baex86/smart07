@@ -3,11 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Calculator, Settings, LogOut, Inbox } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { logoutUser } from '@/app/actions/auth';
 
 export default function SidebarAdmin() {
   const pathname = usePathname();
-  const router = useRouter();
 
   const menuItems = [
     { name: 'Dasbor', icon: LayoutDashboard, href: '/admin' },
@@ -17,10 +16,10 @@ export default function SidebarAdmin() {
     { name: 'Pengaturan', icon: Settings, href: '/admin/pengaturan' },
   ];
 
-  const handleLogout = () => {
-    document.cookie = "smart_system_session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-    document.cookie = "smart_system_uid=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-    router.push('/');
+  const handleLogout = async () => {
+    // Eksekusi pemusnahan session di server
+    await logoutUser();
+    window.location.href = '/';
   };
 
   return (

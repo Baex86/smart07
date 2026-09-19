@@ -3,448 +3,357 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../../lib/supabaseClient';
 import { 
-  Search, User, ChevronDown, ChevronUp, UserCheck, 
-  MapPin, CreditCard, FileText, Phone, X, Users, 
-  Wallet, ShieldAlert, Loader2, Shield, ShieldOff 
+  FileText, MessageSquareWarning, Lightbulb, UserCheck,
+  Loader2, CheckCircle2, XCircle, Clock, Edit3, X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function BukuIndukPage() {
-  const [wargaList, setWargaList] = useState<any[]>([]);
-  const [filteredWarga, setFilteredWarga] = useState<any[]>([]);
-  const [pengaturan, setPengaturan] = useState<any>(null);
+export default function LayananAdminPage() {
+  const [activeTab, setActiveTab] = useState<'surat' | 'aduan' | 'usulan' | 'akun'>('surat');
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [selectedWarga, setSelectedWarga] = useState<any | null>(null);
-  const [myUid, setMyUid] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const [detailData, setDetailData] = useState<{
-    anggota: any[];
-    iuran: any[];
-    layanan: any[];
-  }>({ anggota: [], iuran: [], layanan: [] });
+  const [dataSurat, setDataSurat] = useState<any[]>([]);
+  const [dataAduan, setDataAduan] = useState<any[]>([]);
+  const [dataUsulan, setDataUsulan] = useState<any[]>([]);
   
-  const [isDetailLoading, setIsDetailLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('biodata');
+  // State untuk Manajemen Akun (Pendaftaran & Perubahan Data)
+  const [dataAkun, setDataAkun] = useState<any[]>([]);
+  const [dataDraft, setDataDraft] = useState<any[]>([]);
 
   useEffect(() => {
-    // Ambil UID admin yang sedang login dari Cookie untuk proteksi "Bunuh Diri Admin"
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; smart_system_uid=`);
-    if (parts.length === 2) setMyUid(parts.pop()?.split(';').shift() || null);
-
-    fetchDataAwal();
+    fetchData();
   }, []);
 
-  const fetchDataAwal = async () => {
+  const fetchData = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      // Join ke tabel users untuk menarik data role
-      const [wargaRes, pengRes] = await Promise.all([
-        supabase.from('buku_induk')
-          .select('*, users(role)')
-          .is('kepala_keluarga_id', null)
-          .order('nama_lengkap', { ascending: true }),
-        supabase.from('pengaturan_rt').select('*').limit(1).single()
+      const [suratRes, aduanRes, usulanRes, akunRes, draftRes] = await Promise.all([
+        supabase.from('surat_pengantar').select('*, buku_induk(nama_lengkap, nomor_rumah)').order('created_at', { ascending: false }),
+        supabase.from('aduan_warga').select('*, buku_induk(nama_lengkap, nomor_rumah)').order('created_at', { ascending: false }),
+        supabase.from('usulan_warga').select('*, buku_induk(nama_lengkap, nomor_rumah)').order('created_at', { ascending: false }),
+        supabase.from('buku_induk').select('*, users(role, is_approved)').order('created_at', { ascending: false }),
+        supabase.from('draft_perubahan_data').select('*, buku_induk(nama_lengkap, nomor_rumah)').eq('status', 'menunggu').order('created_at', { ascending: false })
       ]);
 
-      if (wargaRes.error) throw wargaRes.error;
+      if (suratRes.data) setDataSurat(suratRes.data);
+      if (aduanRes.data) setDataAduan(aduanRes.data);
+      if (usulanRes.data) setDataUsulan(usulanRes.data);
       
-      setWargaList(wargaRes.data || []);
-      setFilteredWarga(wargaRes.data || []);
-      
-      if (pengRes.data) {
-        setPengaturan(pengRes.data);
+      if (akunRes.data) {
+        const pendingAkun = akunRes.data.filter(w => w.users && w.users.is_approved === false);
+        setDataAkun(pendingAkun);
       }
+
+      if (draftRes.data) setDataDraft(draftRes.data);
+
     } catch (error) {
-      console.error('Error fetching data awal:', error);
+      console.error('Error fetching layanan:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    const lowercasedQuery = searchQuery.toLowerCase();
-    const filtered = wargaList.filter(warga => 
-      warga.nama_lengkap?.toLowerCase().includes(lowercasedQuery) ||
-      warga.nomor_rumah?.toLowerCase().includes(lowercasedQuery) ||
-      warga.nik?.toLowerCase().includes(lowercasedQuery)
-    );
-    setFilteredWarga(filtered);
-  }, [searchQuery, wargaList]);
-
-  const openDetailModal = async (warga: any) => {
-    setSelectedWarga(warga);
-    setIsDetailLoading(true);
-    setActiveTab('biodata');
+  const updateStatus = async (table: string, id: string, newStatus: string) => {
+    setIsUpdating(true);
     try {
-      const [anggotaRes, iuranRes, suratRes, aduanRes] = await Promise.allSettled([
-        supabase.from('buku_induk').select('*').eq('kepala_keluarga_id', warga.id),
-        supabase.from('iuran_kas').select('*').eq('buku_induk_id', warga.id).order('created_at', { ascending: false }),
-        supabase.from('surat_pengantar').select('*').eq('buku_induk_id', warga.id).order('created_at', { ascending: false }),
-        supabase.from('aduan_warga').select('*').eq('buku_induk_id', warga.id).order('created_at', { ascending: false })
-      ]);
-
-      const surat = suratRes.status === 'fulfilled' && suratRes.value.data ? suratRes.value.data : [];
-      const aduan = aduanRes.status === 'fulfilled' && aduanRes.value.data ? aduanRes.value.data : [];
-
-      setDetailData({
-        anggota: anggotaRes.status === 'fulfilled' && anggotaRes.value.data ? anggotaRes.value.data : [],
-        iuran: iuranRes.status === 'fulfilled' && iuranRes.value.data ? iuranRes.value.data : [],
-        layanan: [...surat, ...aduan].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      });
-    } catch (error) {
-      console.error('Error fetching detail:', error);
-    } finally {
-      setIsDetailLoading(false);
-    }
-  };
-
-  const closeModal = () => {
-    setSelectedWarga(null);
-    setDetailData({ anggota: [], iuran: [], layanan: [] });
-  };
-
-  // Logika Mengangkat / Mencabut Jabatan Admin
-  const handleToggleRole = async (userId: string, currentRole: string) => {
-    const newRole = currentRole === 'admin' ? 'warga' : 'admin';
-    const confirmText = currentRole === 'admin' 
-      ? 'Yakin ingin mencabut akses Admin dari warga ini?' 
-      : 'Yakin ingin mengangkat warga ini menjadi Admin Sistem?';
-
-    if (!confirm(confirmText)) return;
-
-    try {
-      setIsDetailLoading(true);
-      const { error } = await supabase.from('users').update({ role: newRole }).eq('id', userId);
+      const { error } = await supabase.from(table).update({ status: newStatus }).eq('id', id);
       if (error) throw error;
 
-      // Update state lokal biar UI langsung berubah tanpa perlu refresh page
-      const updatedWargaList = wargaList.map(w => {
-        if (w.user_id === userId) {
-          return { ...w, users: { role: newRole } };
-        }
-        return w;
-      });
-      setWargaList(updatedWargaList);
-      setFilteredWarga(updatedWargaList);
-      setSelectedWarga({ ...selectedWarga, users: { role: newRole } });
-
+      if (table === 'surat_pengantar') {
+        setDataSurat(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+      } else if (table === 'aduan_warga') {
+        setDataAduan(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+      } else if (table === 'usulan_warga') {
+        setDataUsulan(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+      }
     } catch (error) {
-      console.error('Gagal update role:', error);
-      alert('Gagal mengubah hak akses.');
+      console.error('Gagal update status:', error);
+      alert('Gagal mengubah status layanan.');
     } finally {
-      setIsDetailLoading(false);
+      setIsUpdating(false);
     }
   };
 
-  const generateAlamatLengkap = (blok: string) => {
-    if (!pengaturan) return 'Data alamat master belum diatur';
-    const alamat = [
-      blok ? `Blok ${blok}` : '',
-      pengaturan.jalan,
-      pengaturan.rt_rw ? `RT/RW ${pengaturan.rt_rw.replace(/[^\d/]/g, '')}` : '',
-      pengaturan.kelurahan ? `Kel. ${pengaturan.kelurahan}` : '',
-      pengaturan.kecamatan ? `Kec. ${pengaturan.kecamatan}` : '',
-      pengaturan.kota,
-      pengaturan.provinsi_kodepos
-    ].filter(Boolean).join(', ');
-    
-    return alamat || 'Alamat tidak lengkap';
+  const approveAkun = async (userId: string, bukuIndukId: string) => {
+    if (!confirm('Setujui pendaftaran akun ini? Warga akan bisa login ke Portal.')) return;
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase.from('users').update({ is_approved: true }).eq('id', userId);
+      if (error) throw error;
+      
+      setDataAkun(prev => prev.filter(item => item.id !== bukuIndukId));
+    } catch (error) {
+      console.error('Gagal ACC warga:', error);
+      alert('Gagal menyetujui akun warga.');
+    } finally {
+      setIsUpdating(false);
+    }
   };
+
+  // --- LOGIKA ACC / TOLAK PERUBAHAN DATA PROFIL ---
+  const handleDraftAction = async (draft: any, action: 'setujui' | 'tolak') => {
+    if (!confirm(`Yakin ingin ${action} pengajuan perubahan data ini?`)) return;
+    setIsUpdating(true);
+    try {
+      if (action === 'setujui') {
+        // 1. Timpa data lama dengan data baru di tabel buku_induk
+        const { error: errUpdate } = await supabase.from('buku_induk').update(draft.data_baru).eq('id', draft.buku_induk_id);
+        if (errUpdate) throw errUpdate;
+      }
+      
+      // 2. Update status draft agar hilang dari antrean menunggu
+      const newStatus = action === 'setujui' ? 'disetujui' : 'ditolak';
+      const { error: errDraft } = await supabase.from('draft_perubahan_data').update({ status: newStatus }).eq('id', draft.id);
+      if (errDraft) throw errDraft;
+
+      // 3. Hapus dari UI
+      setDataDraft(prev => prev.filter(d => d.id !== draft.id));
+    } catch (error) {
+      console.error(`Gagal ${action} draft:`, error);
+      alert(`Gagal memproses pengajuan data.`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'menunggu': return <span className="flex items-center gap-1.5 px-3 py-1 bg-orange-100 text-orange-700 rounded-md text-[10px] font-extrabold uppercase tracking-wider"><Clock size={12} /> Menunggu</span>;
+      case 'diproses': return <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-[10px] font-extrabold uppercase tracking-wider"><Loader2 size={12} className="animate-spin" /> Diproses</span>;
+      case 'selesai':
+      case 'disetujui': return <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-md text-[10px] font-extrabold uppercase tracking-wider"><CheckCircle2 size={12} /> Selesai</span>;
+      case 'ditolak': return <span className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-md text-[10px] font-extrabold uppercase tracking-wider"><XCircle size={12} /> Ditolak</span>;
+      default: return <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-md text-[10px] font-extrabold uppercase tracking-wider">{status}</span>;
+    }
+  };
+
+  const renderContent = () => {
+    let currentData: any[] = [];
+    let tableName = '';
+
+    if (activeTab === 'surat') { currentData = dataSurat; tableName = 'surat_pengantar'; }
+    else if (activeTab === 'aduan') { currentData = dataAduan; tableName = 'aduan_warga'; }
+    else if (activeTab === 'usulan') { currentData = dataUsulan; tableName = 'usulan_warga'; }
+
+    // Tampilan Standar (Surat, Aduan, Usulan)
+    if (activeTab !== 'akun') {
+      if (currentData.length === 0) {
+        return (
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-200">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-4">
+              {activeTab === 'surat' ? <FileText size={32} /> : activeTab === 'aduan' ? <MessageSquareWarning size={32} /> : <Lightbulb size={32} />}
+            </div>
+            <p className="text-slate-500 font-medium">Belum ada antrean untuk layanan ini.</p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex flex-col gap-4">
+          {currentData.map((item) => (
+            <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-5 items-start md:items-center justify-between transition-all hover:shadow-md">
+              <div className="flex items-start gap-4 flex-1">
+                <div className={`p-3 rounded-xl shrink-0 ${activeTab === 'surat' ? 'bg-purple-50 text-purple-600' : activeTab === 'aduan' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                  {activeTab === 'surat' ? <FileText size={24} /> : activeTab === 'aduan' ? <MessageSquareWarning size={24} /> : <Lightbulb size={24} />}
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">{item.judul || item.jenis_surat}</h3>
+                  <p className="text-sm text-slate-500 mt-1 line-clamp-2">{item.deskripsi || item.keperluan || 'Tidak ada deskripsi spesifik.'}</p>
+                  <div className="flex items-center gap-3 mt-3">
+                    <span className="text-xs font-bold text-slate-900">{item.buku_induk?.nama_lengkap}</span>
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-100 rounded">Blok {item.buku_induk?.nomor_rumah}</span>
+                    <span className="text-[10px] font-bold text-slate-400">{new Date(item.created_at).toLocaleDateString('id-ID')}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-3 shrink-0 border-t md:border-t-0 border-slate-100 pt-4 md:pt-0 mt-2 md:mt-0">
+                {getStatusBadge(item.status)}
+                
+                {item.status === 'menunggu' && (
+                  <div className="flex gap-2">
+                    <button onClick={() => updateStatus(tableName, item.id, 'ditolak')} disabled={isUpdating} className="px-3 py-1.5 text-xs font-bold bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg transition">
+                      Tolak
+                    </button>
+                    <button onClick={() => updateStatus(tableName, item.id, 'diproses')} disabled={isUpdating} className="px-3 py-1.5 text-xs font-bold bg-navy-900 text-white hover:bg-navy-800 rounded-lg transition shadow-sm">
+                      Proses
+                    </button>
+                  </div>
+                )}
+                {item.status === 'diproses' && (
+                  <button onClick={() => updateStatus(tableName, item.id, 'selesai')} disabled={isUpdating} className="px-4 py-1.5 text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 rounded-lg transition shadow-sm">
+                    Tandai Selesai
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Tampilan Khusus Tab Manajemen Akun (Akun Baru + Update Profil)
+    if (activeTab === 'akun') {
+      return (
+        <div className="flex flex-col gap-8">
+          
+          {/* SEKSI 1: ANTREAN AKUN BARU */}
+          <div>
+            <h2 className="text-sm font-extrabold text-navy-400 uppercase tracking-wider mb-3 px-1">Aktivasi Akun Baru</h2>
+            {dataAkun.length === 0 ? (
+              <div className="py-6 text-center bg-white border-2 border-dashed border-slate-200 rounded-2xl">
+                <p className="text-slate-500 text-sm font-medium">Tidak ada pendaftaran akun baru.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {dataAkun.map((item) => (
+                  <div key={item.id} className="bg-white p-5 rounded-2xl border border-orange-200 bg-orange-50/10 shadow-sm flex flex-col md:flex-row gap-5 items-start md:items-center justify-between transition-all hover:shadow-md">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="p-3 rounded-xl shrink-0 bg-orange-100 text-orange-600">
+                        <UserCheck size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-lg">{item.nama_lengkap}</h3>
+                        <p className="text-sm text-slate-500 mt-1">
+                          Mendaftar sebagai <span className="font-bold">{item.kepala_keluarga_id ? `Anggota Keluarga (${item.status_hubungan || 'Warga'})` : 'Kepala Keluarga'}</span>
+                        </p>
+                        <div className="flex items-center gap-3 mt-3">
+                          <span className="text-xs font-bold text-slate-900">{item.no_wa || '-'}</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-100 border border-slate-200 rounded">Blok {item.nomor_rumah}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 shrink-0 border-t md:border-t-0 border-slate-100 pt-4 md:pt-0 mt-2 md:mt-0">
+                      <button 
+                        onClick={() => approveAkun(item.user_id, item.id)}
+                        disabled={isUpdating}
+                        className="px-5 py-2 text-sm font-bold bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl transition shadow-sm flex items-center gap-2"
+                      >
+                        {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} 
+                        Setujui Akun
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* SEKSI 2: ANTREAN PERUBAHAN DATA PROFIL */}
+          <div>
+            <h2 className="text-sm font-extrabold text-navy-400 uppercase tracking-wider mb-3 px-1">Pengajuan Perubahan Data</h2>
+            {dataDraft.length === 0 ? (
+              <div className="py-6 text-center bg-white border-2 border-dashed border-slate-200 rounded-2xl">
+                <p className="text-slate-500 text-sm font-medium">Tidak ada pengajuan update profil.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {dataDraft.map((draft) => (
+                  <div key={draft.id} className="bg-white p-5 rounded-2xl border border-blue-200 bg-blue-50/10 shadow-sm flex flex-col md:flex-row gap-5 items-start md:items-center justify-between transition-all hover:shadow-md">
+                    <div className="flex items-start gap-4 flex-1 w-full min-w-0">
+                      <div className="p-3 rounded-xl shrink-0 bg-blue-100 text-blue-600">
+                        <Edit3 size={24} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 text-lg truncate">{draft.buku_induk?.nama_lengkap}</h3>
+                        <p className="text-sm text-slate-500 mt-1">Mengajukan pembaruan data profil.</p>
+                        
+                        {/* Preview Singkat Data Baru */}
+                        <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5 overflow-hidden">
+                          <p><span className="text-slate-500 font-bold">Nama KTP:</span> {draft.data_baru.nama_lengkap || '-'}</p>
+                          <p><span className="text-slate-500 font-bold">WhatsApp:</span> {draft.data_baru.no_wa || '-'}</p>
+                          <p><span className="text-slate-500 font-bold">Pekerjaan:</span> {draft.data_baru.pekerjaan || '-'}</p>
+                          <p><span className="text-slate-500 font-bold">Domisili:</span> {draft.data_baru.status_tinggal || '-'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-row md:flex-col gap-2 shrink-0 border-t md:border-t-0 border-slate-100 pt-4 md:pt-0 mt-2 md:mt-0 w-full md:w-auto">
+                      <button 
+                        onClick={() => handleDraftAction(draft, 'setujui')}
+                        disabled={isUpdating}
+                        className="flex-1 md:w-full px-5 py-2 text-sm font-bold bg-navy-900 text-white hover:bg-navy-800 rounded-xl transition shadow-sm flex items-center justify-center gap-2"
+                      >
+                        {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Setujui
+                      </button>
+                      <button 
+                        onClick={() => handleDraftAction(draft, 'tolak')}
+                        disabled={isUpdating}
+                        className="flex-1 md:w-full px-5 py-2 text-sm font-bold bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-xl transition flex items-center justify-center gap-2"
+                      >
+                        <X size={16} /> Tolak
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      );
+    }
+  };
+
+  const pendingAkunCount = dataAkun.length + dataDraft.length;
 
   return (
     <div className="p-6 md:p-8 w-full max-w-5xl mx-auto flex flex-col gap-6 pb-24">
-      
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-navy-900 tracking-tight">Buku Induk</h1>
-          <p className="text-navy-500 mt-1 text-sm">Direktori hierarki data warga dan manajemen akses Admin.</p>
-        </div>
-        
-        <div className="relative w-full md:w-72">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Cari nama, NIK, atau no. rumah..."
-            className="pl-10 pr-4 py-2.5 w-full border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm text-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+      <div>
+        <h1 className="text-3xl font-extrabold text-navy-900 tracking-tight">Pusat Layanan Warga</h1>
+        <p className="text-navy-500 mt-1 text-sm font-medium">Kelola pengajuan surat, aduan, usulan, dan manajemen akun.</p>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-slate-800" size={40} />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {filteredWarga.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-2xl border border-slate-200">
-              <p className="text-slate-500">Tidak ada data warga yang sesuai.</p>
-            </div>
-          ) : (
-            filteredWarga.map((warga) => {
-              const isExpanded = expandedId === warga.id;
-              const isAdmin = warga.users?.role === 'admin';
-              
-              return (
-                <div key={warga.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-200">
-                  <div 
-                    className="p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50"
-                    onClick={() => setExpandedId(isExpanded ? null : warga.id)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-full flex items-center justify-center text-white shrink-0 shadow-inner ${isAdmin ? 'bg-amber-500' : 'bg-navy-900'}`}>
-                        {isAdmin ? <Shield size={20} /> : <User size={20} />}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                          {warga.nama_lengkap}
-                          {isAdmin && (
-                            <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-wider border border-amber-200">
-                              Admin
-                            </span>
-                          )}
-                        </h3>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{warga.nomor_rumah || 'NO DATA'}</p>
-                      </div>
-                    </div>
-                    {isExpanded ? <ChevronUp className="text-slate-400" /> : <ChevronDown className="text-slate-400" />}
-                  </div>
+      {/* Tabs */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+        {[
+          { id: 'surat', label: 'Surat Pengantar', icon: FileText, count: 0 },
+          { id: 'aduan', label: 'Aduan Warga', icon: MessageSquareWarning, count: 0 },
+          { id: 'usulan', label: 'Usulan Warga', icon: Lightbulb, count: 0 },
+          { id: 'akun', label: 'Manajemen Akun', icon: UserCheck, count: pendingAkunCount }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all shrink-0 ${
+              activeTab === tab.id 
+                ? 'bg-navy-900 text-white shadow-md' 
+                : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'
+            }`}
+          >
+            <tab.icon size={16} /> 
+            {tab.label}
+            {tab.count > 0 ? (
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${activeTab === tab.id ? 'bg-white text-navy-900' : 'bg-orange-500 text-white'}`}>
+                {tab.count}
+              </span>
+            ) : null}
+          </button>
+        ))}
+      </div>
 
-                  {isExpanded && (
-                    <div className="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/50">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1 rounded-md text-xs font-bold tracking-wide">
-                          <UserCheck size={14} /> AKTIF
-                        </div>
-                        <button className="flex items-center gap-1.5 text-green-600 font-bold text-sm hover:text-green-700">
-                          <Phone size={14} /> Hubungi
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 mb-5">
-                        <div>
-                          <p className="text-xs text-slate-400 font-medium flex items-center gap-1 mb-1"><CreditCard size={12} /> NIK</p>
-                          <p className="text-sm font-semibold text-slate-800">{warga.nik || '-'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-400 font-medium flex items-center gap-1 mb-1"><MapPin size={12} /> Domisili</p>
-                          <p className="text-sm font-semibold text-slate-800">{warga.status_domisili || 'Tetap'}</p>
-                        </div>
-                      </div>
-
-                      <button 
-                        onClick={() => openDetailModal(warga)}
-                        className="w-full py-2.5 bg-navy-900 text-white font-bold rounded-xl text-sm hover:bg-navy-800 transition-colors flex justify-center items-center gap-2 shadow-md"
-                      >
-                        <User size={16} /> Lihat Detail & Manajemen Akses
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
-
-      {/* MODAL DETAIL LENGKAP */}
-      {selectedWarga && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeModal}></div>
-          
-          <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                  {selectedWarga.nama_lengkap}
-                  {selectedWarga.users?.role === 'admin' && (
-                    <Shield size={18} className="text-amber-500" />
-                  )}
-                </h2>
-                <p className="text-sm font-medium text-slate-500">Blok {selectedWarga.nomor_rumah}</p>
-              </div>
-              <button onClick={closeModal} className="p-2 bg-white rounded-full hover:bg-slate-200 transition text-slate-500 shadow-sm border border-slate-200">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="flex border-b border-slate-200 px-6 overflow-x-auto no-scrollbar shrink-0">
-              {[
-                { id: 'biodata', label: 'Biodata & Akses', icon: User },
-                { id: 'keluarga', label: 'Keluarga', icon: Users },
-                { id: 'finansial', label: 'Riwayat Iuran', icon: Wallet },
-                { id: 'layanan', label: 'Administrasi', icon: FileText }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-4 border-b-2 font-semibold text-sm whitespace-nowrap transition-colors ${
-                    activeTab === tab.id 
-                      ? 'border-blue-600 text-blue-700' 
-                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <tab.icon size={16} /> {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="p-6 overflow-y-auto flex-1 bg-slate-50/30">
-              {isDetailLoading ? (
-                <div className="flex justify-center items-center h-40">
-                  <Loader2 className="animate-spin text-blue-600" size={32} />
-                </div>
-              ) : (
-                <>
-                  {activeTab === 'biodata' && (
-                    <div className="space-y-6">
-                      
-                      {/* FITUR JADIKAN ADMIN (Hanya muncul jika bukan akunnya sendiri) */}
-                      {selectedWarga.user_id && selectedWarga.id !== myUid && (
-                        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div>
-                            <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mb-1">
-                              <ShieldAlert size={16} className={selectedWarga.users?.role === 'admin' ? 'text-amber-500' : 'text-slate-400'} />
-                              Hak Akses Sistem
-                            </p>
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                              {selectedWarga.users?.role === 'admin'
-                                ? 'Warga ini memiliki akses penuh ke fitur dan Dasbor Admin.'
-                                : 'Warga ini hanya memiliki akses standar ke Portal Warga.'}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleToggleRole(selectedWarga.user_id, selectedWarga.users?.role)}
-                            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shrink-0 ${
-                              selectedWarga.users?.role === 'admin'
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'
-                                : 'bg-navy-900 text-gold hover:bg-navy-800 shadow-md'
-                            }`}
-                          >
-                            {selectedWarga.users?.role === 'admin' 
-                              ? <><ShieldOff size={16}/> Cabut Admin</> 
-                              : <><Shield size={16}/> Jadikan Admin</>}
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Nama Lengkap</p>
-                          <p className="text-base font-semibold text-slate-900">{selectedWarga.nama_lengkap}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">NIK</p>
-                          <p className="text-base font-semibold text-slate-900">{selectedWarga.nik || '-'}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Nomor HP/WA</p>
-                          <p className="text-base font-semibold text-slate-900">{selectedWarga.no_wa || '-'}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Status Domisili</p>
-                          <p className="text-base font-semibold text-slate-900">{selectedWarga.status_domisili || 'Warga Tetap'}</p>
-                        </div>
-                        <div className="sm:col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Alamat Lengkap (KTP)</p>
-                          <p className="text-base font-semibold text-slate-900">
-                            {selectedWarga.status_domisili === 'Warga Tetap' || !selectedWarga.status_domisili
-                              ? generateAlamatLengkap(selectedWarga.nomor_rumah)
-                              : (selectedWarga.alamat_ktp || generateAlamatLengkap(selectedWarga.nomor_rumah))}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === 'keluarga' && (
-                    <div className="space-y-4">
-                      {detailData.anggota.length === 0 ? (
-                        <div className="text-center py-10">
-                          <p className="text-slate-500">Belum ada data anggota keluarga yang terdaftar.</p>
-                        </div>
-                      ) : (
-                        detailData.anggota.map((anggota: any) => (
-                          <div key={anggota.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                            <div>
-                              <p className="font-bold text-slate-900">{anggota.nama_lengkap}</p>
-                              <p className="text-sm text-slate-500">NIK: {anggota.nik || '-'}</p>
-                            </div>
-                            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-100">
-                              {anggota.status_hubungan || 'Anggota'}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-
-                  {activeTab === 'finansial' && (
-                    <div className="space-y-4">
-                      {detailData.iuran.length === 0 ? (
-                        <div className="text-center py-10">
-                          <p className="text-slate-500">Belum ada riwayat pembayaran iuran.</p>
-                        </div>
-                      ) : (
-                        detailData.iuran.map((trx: any, idx) => (
-                          <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                            <div>
-                              <p className="font-bold text-slate-900">{trx.nama_iuran}</p>
-                              <p className="text-xs text-slate-400">{new Date(trx.created_at).toLocaleDateString('id-ID')}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-bold text-slate-900">Rp {trx.nominal?.toLocaleString('id-ID')}</p>
-                              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${trx.status === 'lunas' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                {trx.status}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-
-                  {activeTab === 'layanan' && (
-                    <div className="space-y-4">
-                      {detailData.layanan.length === 0 ? (
-                        <div className="text-center py-10">
-                          <p className="text-slate-500">Belum ada riwayat pengajuan surat atau aduan.</p>
-                        </div>
-                      ) : (
-                        detailData.layanan.map((item: any, idx) => {
-                          const isAduan = item.judul !== undefined;
-                          return (
-                            <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                              <div className={`p-3 rounded-full shrink-0 ${isAduan ? 'bg-red-50 text-red-600' : 'bg-purple-50 text-purple-600'}`}>
-                                {isAduan ? <ShieldAlert size={18} /> : <FileText size={18} />}
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-bold text-slate-900">{isAduan ? item.judul : item.jenis_surat}</p>
-                                <p className="text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString('id-ID')}</p>
-                              </div>
-                              <span className="text-[10px] font-bold uppercase px-2 py-1 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-                                {item.status}
-                              </span>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-
-                </>
-              )}
-            </div>
+      {/* Content */}
+      <div className="mt-2">
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-slate-800" size={40} />
           </div>
-        </div>
-      )}
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </div>
     </div>
   );
 }

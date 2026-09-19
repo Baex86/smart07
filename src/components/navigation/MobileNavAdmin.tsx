@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Calculator, Settings, Inbox } from 'lucide-react';
+import { LayoutDashboard, Users, Calculator, Settings, Inbox, LogOut } from 'lucide-react';
+import { logoutUser } from '@/app/actions/auth';
 
 export default function MobileNavAdmin() {
   const pathname = usePathname();
@@ -15,10 +16,20 @@ export default function MobileNavAdmin() {
     { name: 'Setelan', icon: Settings, href: '/admin/pengaturan' },
   ];
 
+  const handleLogout = async () => {
+    if (!confirm('Yakin ingin keluar dari portal Admin?')) return;
+    await logoutUser();
+    window.location.href = '/';
+  };
+
   return (
     <>
-      <header className="md:hidden fixed top-0 left-0 w-full bg-navy-900 text-ivory-50 h-16 flex items-center justify-center shadow-md z-50">
-        <h2 className="text-2xl font-extrabold tracking-tight text-gold">SMART O7</h2>
+      <header className="md:hidden fixed top-0 left-0 w-full bg-navy-900 text-ivory-50 h-16 flex items-center justify-between px-5 shadow-md z-50">
+        <h2 className="text-xl font-extrabold tracking-tight text-gold">SMART O7</h2>
+        {/* Tombol Logout dipindah ke Header buat Admin biar Bottom Nav gak kepenuhan */}
+        <button onClick={handleLogout} className="p-2 rounded-full hover:bg-navy-800 text-red-400 transition-colors">
+          <LogOut size={20} />
+        </button>
       </header>
       
       <nav className="md:hidden fixed bottom-0 left-0 w-full bg-navy-900 border-t border-navy-800 shadow-[0_-4px_20px_rgb(0,0,0,0.2)] z-50 pb-safe overflow-x-auto hide-scrollbar">

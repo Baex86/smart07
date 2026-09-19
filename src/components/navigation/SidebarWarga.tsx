@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Wallet, FileText, User, LogOut } from 'lucide-react';
+import { logoutUser } from '@/app/actions/auth';
 
 export default function SidebarWarga() {
   const pathname = usePathname();
@@ -13,6 +14,11 @@ export default function SidebarWarga() {
     { name: 'Surat Pengantar', icon: FileText, href: '/surat' },
     { name: 'Profil', icon: User, href: '/profil' },
   ];
+
+  const handleLogout = async () => {
+    await logoutUser();
+    window.location.href = '/';
+  };
 
   return (
     <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-ivory-50 border-r border-ivory-300 shadow-sm z-50">
@@ -46,11 +52,7 @@ export default function SidebarWarga() {
       
       <div className="p-4 border-t border-ivory-300">
         <button 
-          onClick={() => {
-            document.cookie = "smart_system_session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-            document.cookie = "smart_system_uid=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-            window.location.href = '/';
-          }}
+          onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-600 hover:bg-red-50 transition-colors font-medium"
         >
           <LogOut size={20} />

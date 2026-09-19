@@ -1,19 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
-import { useRouter } from 'next/navigation';
-import { Loader2, Plus, Trash2, CheckCircle2, User } from 'lucide-react';
+import { Loader2, Plus, Trash2, CheckCircle2, User, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { submitOnboarding, getOnboardingContext } from '@/app/actions/onboarding';
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnggota, setIsAnggota] = useState(false);
-  const [userId, setUserId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
+  
   const [formData, setFormData] = useState({
     nik: '',
     no_kk: '',
@@ -28,37 +25,27 @@ export default function OnboardingPage() {
   const [keluarga, setKeluarga] = useState([{ nama: '', status_hubungan: 'Istri', no_wa: '' }]);
 
   useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          router.push('/');
-          return;
-        }
-        
-        setUserId(session.user.id);
-        
-        const { data, error } = await supabase
-          .from('buku_induk')
-          .select('kepala_keluarga_id')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (error) throw error;
-        
-        // Deteksi kalau dia bukan KK (punya kepala_keluarga_id)
-        if (data && data.kepala_keluarga_id) {
-          setIsAnggota(true);
-        }
-      } catch (err) {
-        console.error('Error fetching status:', err);
-      } finally {
-        setIsLoading(false);
+    getOnboardingContext().then((res) => {
+      if (!res) {
+        window.location.href = '/';
+        return;
       }
-    };
-    
-    checkStatus();
-  }, [router]);
+      setIsAnggota(res.isAnggota);
+      
+      // REVISI: Tambah optional chaining (?.) biar TypeScript mingkem
+      if (res.isAnggota && res.parentData) {
+        setFormData(prev => ({
+          ...prev,
+          no_kk: res.parentData?.no_kk || '',
+          status_tinggal: res.parentData?.status_tinggal || 'Tetap'
+        }));
+      }
+      setIsLoading(false);
+    }).catch(() => {
+      setErrorMessage('Gagal memuat status kependudukan.');
+      setIsLoading(false);
+    });
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -70,45 +57,29 @@ export default function OnboardingPage() {
     setKeluarga(newKeluarga);
   };
 
-  const addKeluarga = () => {
-    setKeluarga([...keluarga, { nama: '', status_hubungan: 'Anak', no_wa: '' }]);
-  };
-
-  const removeKeluarga = (index: number) => {
-    const newKeluarga = keluarga.filter((_, i) => i !== index);
-    setKeluarga(newKeluarga);
-  };
+  const addKeluarga = () => { setKeluarga([...keluarga, { nama: '', status_hubungan: 'Anak', no_wa: '' }]); };
+  const removeKeluarga = (index: number) => { setKeluarga(keluarga.filter((_, i) => i !== index)); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return; // Mencegah double submit / data ganda
+    if (isSubmitting) return; 
     
     setIsSubmitting(true);
     setErrorMessage('');
-
+    
     try {
-      // Filter array keluarga yang kosong
       const validKeluarga = isAnggota ? [] : keluarga.filter(k => k.nama.trim() !== '');
+      const result = await submitOnboarding({ ...formData, keluarga: validKeluarga });
 
-      const { error } = await supabase.rpc('complete_onboarding', {
-        p_user_id: userId,
-        p_nik: formData.nik,
-        p_no_kk: formData.no_kk,
-        p_jenis_kelamin: formData.jenis_kelamin,
-        p_tempat_lahir: formData.tempat_lahir,
-        p_tanggal_lahir: formData.tanggal_lahir,
-        p_agama: formData.agama,
-        p_pekerjaan: formData.pekerjaan,
-        p_status_tinggal: formData.status_tinggal,
-        p_keluarga: validKeluarga
-      });
-
-      if (error) throw error;
-
-      router.push('/dashboard');
+      if (!result.success) {
+        setErrorMessage(result.error || 'Terjadi penolakan dari database.');
+        setIsSubmitting(false);
+        return;
+      }
+      window.location.href = '/dashboard';
     } catch (error: any) {
-      setErrorMessage(error.message || 'Terjadi kesalahan saat menyimpan data.');
-      setIsSubmitting(false); // Buka kunci cuma kalau error
+      setErrorMessage(error.message || 'Terjadi kesalahan jaringan.');
+      setIsSubmitting(false); 
     }
   };
 
@@ -129,13 +100,10 @@ export default function OnboardingPage() {
         </div>
 
         {errorMessage && (
-          <div className="p-4 bg-red-50 text-red-600 text-sm font-bold rounded-xl border border-red-200">
-            {errorMessage}
-          </div>
+          <div className="p-4 bg-red-50 text-red-600 text-sm font-bold rounded-xl border border-red-200">{errorMessage}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Data Diri */}
           <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-ivory-300">
             <h2 className="text-xl font-bold text-navy-900 mb-5 flex items-center gap-2 border-b border-ivory-100 pb-3">
               <User className="text-gold" size={24} /> Data Pribadi
@@ -145,10 +113,15 @@ export default function OnboardingPage() {
                 <label className="block text-sm font-semibold text-navy-700 mb-1">NIK</label>
                 <input type="number" name="nik" required value={formData.nik} onChange={handleChange} className="w-full px-4 py-3 border border-ivory-300 rounded-xl focus:ring-2 focus:ring-navy-400 focus:outline-none" />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-navy-700 mb-1">Nomor KK</label>
-                <input type="number" name="no_kk" required value={formData.no_kk} onChange={handleChange} className="w-full px-4 py-3 border border-ivory-300 rounded-xl focus:ring-2 focus:ring-navy-400 focus:outline-none" />
+              
+              {/* KOLOM NO KK TERKUNCI JIKA ANGGOTA */}
+              <div className={isAnggota ? 'opacity-70' : ''}>
+                <label className="flex items-center gap-2 text-sm font-semibold text-navy-700 mb-1">
+                  Nomor KK {isAnggota && <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded flex items-center gap-1"><Lock size={10} /> Terkunci</span>}
+                </label>
+                <input type="number" name="no_kk" required disabled={isAnggota} value={formData.no_kk} onChange={handleChange} className="w-full px-4 py-3 border border-ivory-300 rounded-xl focus:ring-2 focus:ring-navy-400 focus:outline-none disabled:bg-ivory-100 disabled:cursor-not-allowed" />
               </div>
+
               <div>
                 <label className="block text-sm font-semibold text-navy-700 mb-1">Jenis Kelamin</label>
                 <select name="jenis_kelamin" value={formData.jenis_kelamin} onChange={handleChange} className="w-full px-4 py-3 border border-ivory-300 rounded-xl focus:ring-2 focus:ring-navy-400 focus:outline-none">
@@ -179,9 +152,13 @@ export default function OnboardingPage() {
                 <label className="block text-sm font-semibold text-navy-700 mb-1">Pekerjaan</label>
                 <input type="text" name="pekerjaan" required value={formData.pekerjaan} onChange={handleChange} className="w-full px-4 py-3 border border-ivory-300 rounded-xl focus:ring-2 focus:ring-navy-400 focus:outline-none" />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-navy-700 mb-1">Status Tinggal</label>
-                <select name="status_tinggal" value={formData.status_tinggal} onChange={handleChange} className="w-full px-4 py-3 border border-ivory-300 rounded-xl focus:ring-2 focus:ring-navy-400 focus:outline-none">
+              
+              {/* KOLOM STATUS TINGGAL TERKUNCI JIKA ANGGOTA */}
+              <div className={isAnggota ? 'opacity-70' : ''}>
+                <label className="flex items-center gap-2 text-sm font-semibold text-navy-700 mb-1">
+                  Status Tinggal {isAnggota && <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded flex items-center gap-1"><Lock size={10} /> Terkunci</span>}
+                </label>
+                <select name="status_tinggal" disabled={isAnggota} value={formData.status_tinggal} onChange={handleChange} className="w-full px-4 py-3 border border-ivory-300 rounded-xl focus:ring-2 focus:ring-navy-400 focus:outline-none disabled:bg-ivory-100 disabled:cursor-not-allowed">
                   <option value="Tetap">Warga Tetap</option>
                   <option value="Kontrak">Kontrak / Kos</option>
                 </select>
@@ -189,7 +166,6 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          {/* Form Tambah Keluarga (Hanya muncul jika dia Kepala Keluarga) */}
           {!isAnggota && (
             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-ivory-300">
               <div className="mb-5 border-b border-ivory-100 pb-3">
@@ -200,9 +176,7 @@ export default function OnboardingPage() {
               <div className="space-y-4">
                 {keluarga.map((k, index) => (
                   <div key={index} className="p-4 bg-ivory-50 border border-ivory-200 rounded-xl relative">
-                    <button type="button" onClick={() => removeKeluarga(index)} className="absolute top-4 right-4 text-red-400 hover:text-red-600 transition-colors">
-                      <Trash2 size={18} />
-                    </button>
+                    <button type="button" onClick={() => removeKeluarga(index)} className="absolute top-4 right-4 text-red-400 hover:text-red-600 transition-colors"><Trash2 size={18} /></button>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                       <div>
                         <label className="block text-xs font-semibold text-navy-700 mb-1">Nama Anggota</label>
@@ -211,10 +185,7 @@ export default function OnboardingPage() {
                       <div>
                         <label className="block text-xs font-semibold text-navy-700 mb-1">Status Hubungan</label>
                         <select value={k.status_hubungan} onChange={(e) => handleKeluargaChange(index, 'status_hubungan', e.target.value)} className="w-full px-3 py-2 border border-ivory-300 rounded-lg text-sm focus:ring-2 focus:ring-navy-400 focus:outline-none">
-                          <option value="Istri">Istri</option>
-                          <option value="Suami">Suami</option>
-                          <option value="Anak">Anak</option>
-                          <option value="Lainnya">Lainnya</option>
+                          <option value="Istri">Istri</option><option value="Suami">Suami</option><option value="Anak">Anak</option><option value="Lainnya">Lainnya</option>
                         </select>
                       </div>
                       <div className="md:col-span-2">
@@ -224,10 +195,7 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                 ))}
-                
-                <button type="button" onClick={addKeluarga} className="w-full py-3 border-2 border-dashed border-ivory-300 text-navy-600 rounded-xl font-bold text-sm hover:bg-ivory-50 transition-colors flex justify-center items-center gap-2">
-                  <Plus size={18} /> Tambah Anggota
-                </button>
+                <button type="button" onClick={addKeluarga} className="w-full py-3 border-2 border-dashed border-ivory-300 text-navy-600 rounded-xl font-bold text-sm hover:bg-ivory-50 transition-colors flex justify-center items-center gap-2"><Plus size={18} /> Tambah Anggota</button>
               </div>
             </div>
           )}

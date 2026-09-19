@@ -11,7 +11,6 @@ export async function getProfilWarga() {
     throw new Error('Sesi tidak valid. Harap login kembali.');
   }
 
-  // 1. Tarik profil yang sedang login
   const { data: profil, error: errProfil } = await supabase
     .from('buku_induk')
     .select('*')
@@ -20,10 +19,8 @@ export async function getProfilWarga() {
 
   if (errProfil || !profil) throw new Error('Gagal menarik data profil.');
 
-  // 2. Logic rujukan hierarki keluarga
   const familyReferenceId = profil.kepala_keluarga_id ? profil.kepala_keluarga_id : profil.id;
 
-  // 3. Tarik semua entitas keluarga yang terikat dengan ID tersebut
   const { data: familyData, error: errFamily } = await supabase
     .from('buku_induk')
     .select('*')
@@ -38,11 +35,24 @@ export async function getProfilWarga() {
   return { profil, keluarga };
 }
 
-export async function ajukanPerubahanData(formData: any) {
+export async function ajukanPerubahanData(formData: any, password: string) {
   const cookieStore = await cookies();
   const uid = cookieStore.get('smart_system_uid')?.value;
 
   if (!uid) throw new Error('Sesi tidak valid.');
+
+  const { data: bukuInduk } = await supabase.from('buku_induk').select('user_id').eq('id', uid).single();
+  
+  if (!bukuInduk?.user_id) throw new Error('Akses ditolak. Akun belum terikat.');
+
+  const { data: isPasswordValid, error: rpcError } = await supabase.rpc('verify_user_password', {
+    p_user_id: bukuInduk.user_id,
+    p_password: password
+  });
+
+  if (rpcError || !isPasswordValid) {
+    throw new Error('Kata sandi salah. Verifikasi gagal.');
+  }
 
   const { error } = await supabase.from('draft_perubahan_data').insert([{
     buku_induk_id: uid,
@@ -51,25 +61,26 @@ export async function ajukanPerubahanData(formData: any) {
   }]);
 
   if (error) throw new Error(error.message);
+
   return { success: true };
 }
-
-// --- FUNGSI MANAJEMEN KELUARGA DIRECT ---
 
 export async function tambahKeluarga(data: any) {
   const cookieStore = await cookies();
   const uid = cookieStore.get('smart_system_uid')?.value;
+
   if (!uid) throw new Error('Sesi tidak valid.');
 
   const { data: profil } = await supabase.from('buku_induk').select('nomor_rumah').eq('id', uid).single();
 
   const { error } = await supabase.from('buku_induk').insert([{
-    kepala_keluarga_id: uid, // Ikat ke ID parent
+    kepala_keluarga_id: uid,
     nama_lengkap: data.nama_lengkap,
     status_hubungan: data.status_hubungan,
     nik: data.nik || null,
+    no_wa: data.no_wa || null,
     nomor_rumah: profil?.nomor_rumah || '-',
-    is_completed: true
+    is_completed: false // FIX: Harus false agar Middleware SmaRT O7 memaksa anggota masuk ke halaman Onboarding
   }]);
 
   if (error) throw new Error(error.message);
@@ -80,7 +91,8 @@ export async function editKeluarga(data: any) {
   const { error } = await supabase.from('buku_induk').update({
     nama_lengkap: data.nama_lengkap,
     status_hubungan: data.status_hubungan,
-    nik: data.nik || null
+    nik: data.nik || null,
+    no_wa: data.no_wa || null
   }).eq('id', data.id);
 
   if (error) throw new Error(error.message);
@@ -88,8 +100,6 @@ export async function editKeluarga(data: any) {
 }
 
 export async function hapusKeluarga(id: string) {
-  // Hanya bisa hapus jika dia belum punya akun login (user_id null) 
-  // atau kita hapus paksa relasinya
   const { error } = await supabase.from('buku_induk').delete().eq('id', id);
   if (error) throw new Error(error.message);
   return { success: true };
