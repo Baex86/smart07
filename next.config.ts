@@ -13,7 +13,13 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {},
+  webpack: (config) => {
+    return config;
+  },
+  experimental: {
+    workerThreads: false,
+  },
 };
 
 export default withPWA(nextConfig);
