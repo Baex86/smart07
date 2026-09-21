@@ -13,7 +13,7 @@ export async function getProfilWarga() {
 
   const { data: profil, error: errProfil } = await supabase
     .from('buku_induk')
-    .select('*')
+    .select('*, users(role)')
     .eq('id', uid)
     .single();
 
@@ -45,14 +45,29 @@ export async function ajukanPerubahanData(formData: any, password: string) {
   
   if (!bukuInduk?.user_id) throw new Error('Akses ditolak. Akun belum terikat.');
 
-  const { data: isPasswordValid, error: rpcError } = await supabase.rpc('verify_user_password', {
-    p_user_id: bukuInduk.user_id,
+  // Tarik no_wa user buat otentikasi ulang
+  const { data: user } = await supabase.from('users').select('no_wa').eq('id', bukuInduk.user_id).single();
+
+  if (!user) throw new Error('Data kredensial tidak ditemukan.');
+
+  // DAUR ULANG FUNGSI LOGIN: Biar algoritma hashing 100% akurat
+  const { data: loginData, error: loginError } = await supabase.rpc('login_user', {
+    p_no_wa: user.no_wa,
     p_password: password
   });
 
-  if (rpcError || !isPasswordValid) {
+  if (loginError || !loginData) {
     throw new Error('Kata sandi salah. Verifikasi gagal.');
   }
+
+  // Perbarui sesi karena login_user bikin token baru
+  cookieStore.set('smart_system_session', loginData.session_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/',
+  });
 
   const { error } = await supabase.from('draft_perubahan_data').insert([{
     buku_induk_id: uid,
@@ -80,7 +95,7 @@ export async function tambahKeluarga(data: any) {
     nik: data.nik || null,
     no_wa: data.no_wa || null,
     nomor_rumah: profil?.nomor_rumah || '-',
-    is_completed: false // FIX: Harus false agar Middleware SmaRT O7 memaksa anggota masuk ke halaman Onboarding
+    is_completed: false
   }]);
 
   if (error) throw new Error(error.message);

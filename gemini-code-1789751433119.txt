@@ -1,0 +1,76 @@
+=======================================================================
+MASTER BLUEPRINT & SYSTEM ARCHITECTURE
+PROJECT: SmaRT System (Sistem Manajemen RT Pintar)
+KLIEN: RT 07 RW 06 Griya Permata Meri
+=======================================================================
+
+1. IDENTITAS & TECH STACK
+-----------------------------------------------------------------------
+- Nama Sistem: SmaRT System
+- Klien: RT 07 RW 06 Griya Permata Meri
+- Framework: Next.js (App Router), React, TypeScript
+- Styling: Tailwind CSS
+- Animasi: Framer Motion (Wajib menggunakan gaya "old money vibes": smooth, elegan, mewah, tidak alay/lebay. Dilarang menggunakan library parallax eksternal).
+- Database: Supabase (PostgreSQL) - HANYA sebagai Database & RPC.
+- Autentikasi: CUSTOM AUTH (Bypass Supabase Auth) menggunakan pgcrypto & Cookies.
+
+2. ATURAN MUTLAK (STRICT RULES)
+-----------------------------------------------------------------------
+- DILARANG menggunakan `supabase.auth`. Semua autentikasi menggunakan tabel `users` kustom dan RPC PostgreSQL.
+- DILARANG menggunakan URL default secara langsung. Gunakan Middleware Rewrite (URL Obfuscation): 
+  * URL `/admin` harus tampil sebagai `/ruang-kendali` di browser.
+  * URL `/dashboard` harus tampil sebagai `/portal-warga` di browser.
+- UI/UX WAJIB Mobile-First: Gunakan Bottom Navigation untuk HP (hilang di PC) dan Sidebar untuk PC (hilang di HP).
+- Fitur Logout HANYA boleh menggunakan hard reload: hapus cookie `gapura_session` & `gapura_uid`, hapus localStorage, dan eksekusi `window.location.replace('/')`.
+
+3. ARSITEKTUR DATABASE (SUPABASE POSTGRESQL)
+-----------------------------------------------------------------------
+Seluruh relasi operasional wajib mengikat pada `buku_induk_id`, BUKAN `user_id`.
+
+A. Keamanan & Pengaturan
+- `users`: id, no_wa (format 628...), password_hash (pgcrypto), role (admin/warga/developer), session_token (UUID 1 device), is_approved (boolean).
+- `pengaturan_rt`: id, nama_rt, alamat_perumahan, wa_admin.
+
+B. Data Kependudukan (Jantung Data)
+- `buku_induk`: id, user_id (FK), nama_lengkap, nomor_rumah, nik, no_kk, jenis_kelamin, tempat_lahir, tanggal_lahir, agama, pekerjaan, status_tinggal, is_completed (boolean).
+- `keluarga`: id, induk_id (FK), nama, status_hubungan, no_wa.
+
+C. Keuangan
+- `master_iuran`: id, nama, tipe (rutin/insidental), nominal_default, is_active.
+- `kategori_kas`: id, nama, tipe (masuk/keluar).
+- `arus_kas` (Ledger): id, tanggal, keterangan, tipe, nominal, kategori_id (FK).
+- `iuran_kas` (Tagihan Klien): id, buku_induk_id (FK), master_iuran_id, nama_iuran, bulan, tahun, nominal, status (belum_lunas/menunggu_konfirmasi/lunas).
+
+D. Layanan SmaRT System
+- `surat_pengantar`: id, buku_induk_id (FK), jenis_surat, keperluan, status. (Output akhir: HANYA generate PDF otomatis sesuai data Buku Induk, siap print).
+- `aduan_warga`: id, buku_induk_id (FK), kode_tiket (generate auto misal: TKT-ADU-123), judul, deskripsi, status, tanggapan_admin.
+- `usulan_warga`: id, buku_induk_id (FK), judul, deskripsi, dukungan (upvote counter), status.
+- `inventaris_rt`: id, nama_barang, tgl_beli, harga, kondisi (Baik/Rusak), lokasi.
+
+4. LOGIKA & ALUR AUTENTIKASI BERLAPIS
+-----------------------------------------------------------------------
+1. Registrasi: Insert WA & Hash Password ke `users` (is_approved=false) -> Insert Nama & Blok ke `buku_induk` (is_completed=false). Kirim notifikasi WA ke admin otomatis.
+2. Login: Verifikasi pgcrypto via RPC -> Generate UUID Session -> Simpan di DB & Browser Cookie (gapura_session, gapura_uid).
+3. Middleware Check: 
+   - Cocokkan cookie dengan session_token di DB (Single Device Login).
+   - Redirect sesuai role (Developer bebas, Admin ke /ruang-kendali, Warga ke /portal-warga).
+   - Jika role warga & `is_approved == false`: Redirect ke `/menunggu-verifikasi`.
+   - Jika role warga, `is_approved == true`, tapi `is_completed == false`: Redirect paksa ke `/onboarding` (Pengisian Data Buku Induk/KK).
+
+5. STRUKTUR FOLDER NEXT.JS (ROUTE GROUPS)
+-----------------------------------------------------------------------
+- /app/(public)/page.tsx -> Halaman Login
+- /app/(public)/daftar/page.tsx -> Halaman Registrasi (Regex ketat, Eye toggle password ganda)
+- /app/(warga)/onboarding/page.tsx -> Form Multi-step (Buku Induk & Keluarga)
+- /app/(warga)/menunggu-verifikasi/page.tsx -> Hal. Tunggu ACC
+- /app/(warga)/dashboard/... -> Di-rewrite ke /portal-warga. Layout: BottomNav HP, Sidebar PC.
+- /app/(admin)/admin/... -> Di-rewrite ke /ruang-kendali. Layout: App Header + Bottom Icon HP, Sidebar PC.
+
+6. INSTRUKSI UNTUK AI (PROMPT BEHAVIOR)
+-----------------------------------------------------------------------
+Setiap kali diminta membuat kode untuk proyek ini:
+1. Pastikan import `cookies` dari `next/headers` untuk mengambil `gapura_uid`.
+2. Gunakan relasi `buku_induk_id` untuk query ke Supabase, bukan ID dari tabel users.
+3. Jangan pernah merubah styling dasar Tailwind tanpa diminta.
+4. Tuliskan kode yang siap produksi, tanpa placeholder, dan berbahasa Indonesia baku/santai sesuai konteks.
+=======================================================================

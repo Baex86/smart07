@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, User, Users, MapPin, CreditCard, Phone, Calendar, Edit3, LogOut, CheckCircle2, X, Plus, Trash2, Edit2, MessageCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, User, Users, MapPin, CreditCard, Phone, Calendar, Edit3, LogOut, CheckCircle2, X, Plus, Trash2, Edit2, MessageCircle, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getProfilWarga, ajukanPerubahanData, tambahKeluarga, editKeluarga, hapusKeluarga } from '../../actions/profil';
-import { logoutUser } from '../../actions/auth';
+import { logoutUser, verifyRoleSwitch } from '../../actions/auth';
 
 export default function ProfilPage() {
   const [profil, setProfil] = useState<any>(null);
@@ -26,6 +26,13 @@ export default function ProfilPage() {
   const [isKeluargaModalOpen, setIsKeluargaModalOpen] = useState(false);
   const [keluargaMode, setKeluargaMode] = useState<'tambah' | 'edit'>('tambah');
   const [keluargaForm, setKeluargaForm] = useState({ id: '', nama_lengkap: '', status_hubungan: 'Anak', nik: '', no_wa: '' });
+
+  // State Switch Role Admin
+  const [isAdminSwitchOpen, setIsAdminSwitchOpen] = useState(false);
+  const [switchPassword, setSwitchPassword] = useState('');
+  const [showSwitchPassword, setShowSwitchPassword] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [switchError, setSwitchError] = useState('');
 
   const fetchData = async () => {
     try {
@@ -283,6 +290,14 @@ export default function ProfilPage() {
           </div>
 
           <div className="flex flex-col gap-3">
+            {profil?.users?.role === 'admin' && (
+              <button 
+                onClick={() => setIsAdminSwitchOpen(true)}
+                className="w-full py-3.5 bg-gold text-navy-900 font-extrabold rounded-xl hover:bg-gold-light transition-all flex justify-center items-center gap-2 shadow-md mb-2"
+              >
+                <ShieldAlert size={18} /> Buka Mode Admin
+              </button>
+            )}
             <button 
               onClick={() => setIsEditModalOpen(true)} 
               className="w-full py-3.5 bg-navy-900 text-ivory-50 font-bold rounded-xl hover:bg-navy-800 transition-all flex justify-center items-center gap-2 shadow-md"
@@ -431,6 +446,47 @@ export default function ProfilPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* MODAL SWITCH KE ADMIN */}
+      <AnimatePresence>
+        {isAdminSwitchOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAdminSwitchOpen(false)} className="absolute inset-0 bg-navy-900/80 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+              <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50">
+                  <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><ShieldAlert size={18} className="text-gold"/> Otorisasi Admin</h3>
+                  <button onClick={() => setIsAdminSwitchOpen(false)} className="p-1.5 bg-white rounded-full text-navy-400 border border-ivory-200"><X size={18} /></button>
+              </div>
+              <div className="p-6">
+                <p className="text-sm font-medium text-navy-500 mb-5 leading-relaxed">Masukkan kata sandi untuk kembali ke Dasbor Admin.</p>
+                {switchError && <p className="mb-4 text-xs font-bold text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">{switchError}</p>}
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setIsSwitching(true);
+                  setSwitchError('');
+                  try {
+                    await verifyRoleSwitch(switchPassword);
+                    window.location.href = '/admin';
+                  } catch (err: any) {
+                    setSwitchError(err.message);
+                  } finally {
+                    setIsSwitching(false);
+                  }
+                }} className="space-y-4">
+                  <div className="relative">
+                    <input type={showSwitchPassword ? 'text' : 'password'} required value={switchPassword} onChange={e => setSwitchPassword(e.target.value)} placeholder="Kata Sandi..." className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl outline-none text-navy-900 font-medium pr-12" />
+                    <button type="button" onClick={() => setShowSwitchPassword(!showSwitchPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-300 hover:text-navy-600"><Eye size={20} /></button>
+                  </div>
+                  <button type="submit" disabled={isSwitching} className="w-full py-3.5 bg-gold text-navy-900 font-bold rounded-xl hover:bg-gold-light transition flex justify-center items-center gap-2 shadow-md">
+                    {isSwitching ? <Loader2 size={18} className="animate-spin"/> : 'Kembali ke Admin'}
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </motion.div>
   );
 }

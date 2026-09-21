@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../../../lib/supabaseClient';
-import { Save, Loader2, MapPin, Building, Phone, AlertCircle, Tags, Trash2, Plus, ChevronDown, Megaphone } from 'lucide-react';
+import { Save, Loader2, MapPin, Building, Phone, AlertCircle, Tags, Trash2, Plus, ChevronDown, Megaphone, Shield, Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PengaturanPage() {
@@ -27,6 +27,11 @@ export default function PengaturanPage() {
   const [newPengumuman, setNewPengumuman] = useState({ pesan: '', batas_waktu: '' });
   const [isProcessingBlast, setIsProcessingBlast] = useState(false);
 
+  // State Manajemen Admin
+  const [kandidatAdmin, setKandidatAdmin] = useState<any[]>([]);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [adminSearch, setAdminSearch] = useState('');
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -45,10 +50,11 @@ export default function PengaturanPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [pengaturanRes, kategoriRes, pengumumanRes] = await Promise.all([
+      const [pengaturanRes, kategoriRes, pengumumanRes, kandidatRes] = await Promise.all([
         supabase.from('pengaturan_rt').select('*').limit(1).single(),
         supabase.from('kategori_kas').select('*').order('tipe', { ascending: true }),
-        supabase.from('pengumuman').select('*').order('created_at', { ascending: false })
+        supabase.from('pengumuman').select('*').order('created_at', { ascending: false }),
+        supabase.from('buku_induk').select('*, users(role, is_approved)').eq('is_completed', true).order('nama_lengkap', { ascending: true })
       ]);
 
       if (pengaturanRes.data) {
@@ -68,6 +74,12 @@ export default function PengaturanPage() {
       
       if (kategoriRes.data) setKategoriList(kategoriRes.data);
       if (pengumumanRes.data) setPengumumanList(pengumumanRes.data);
+      
+      if (kandidatRes.data) {
+        const wargaTervalidasi = kandidatRes.data.filter(w => w.users && w.users.is_approved === true);
+        setKandidatAdmin(wargaTervalidasi);
+      }
+
     } catch (error) {
       console.error('Gagal mengambil data:', error);
     } finally {
@@ -175,6 +187,36 @@ export default function PengaturanPage() {
     }
   };
 
+  // --- HANDLER MANAJEMEN ADMIN ---
+  const handleToggleAdmin = async (userId: string, currentRole: string) => {
+    const newRole = currentRole === 'admin' ? 'warga' : 'admin';
+    const confirmText = currentRole === 'admin' 
+      ? 'Yakin ingin MENCABUT akses Admin dari warga ini?' 
+      : 'Yakin ingin MENJADIKAN warga ini sebagai Admin?';
+    
+    if (!confirm(confirmText)) return;
+
+    try {
+      const { error } = await supabase.from('users').update({ role: newRole }).eq('id', userId);
+      if (error) throw error;
+
+      setKandidatAdmin(prev => prev.map(warga => {
+        if (warga.user_id === userId) {
+          return { ...warga, users: { ...warga.users, role: newRole } };
+        }
+        return warga;
+      }));
+    } catch (err) {
+      console.error('Gagal update role:', err);
+      alert('Gagal mengubah hak akses admin.');
+    }
+  };
+
+  // --- PEMISAHAN DATA ADMIN ---
+  const adminAktif = kandidatAdmin.filter(w => w.users?.role === 'admin');
+  const calonAdmin = kandidatAdmin.filter(w => w.users?.role !== 'admin');
+  const filteredCalonAdmin = calonAdmin.filter(w => w.nama_lengkap?.toLowerCase().includes(adminSearch.toLowerCase()));
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[70vh]">
@@ -191,10 +233,8 @@ export default function PengaturanPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
         {/* KOLOM KIRI: Profil & Alamat */}
         <div className="flex flex-col gap-6">
-          
           {/* Card 1: Identitas RT */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-center gap-3">
@@ -308,7 +348,6 @@ export default function PengaturanPage() {
 
         {/* KOLOM KANAN: Kategori & Blast */}
         <div className="flex flex-col gap-6">
-          
           {/* Card 3: Blast Informasi */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
             <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
@@ -370,8 +409,8 @@ export default function PengaturanPage() {
           </div>
 
           {/* Card 4: Kategori Kas */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-center gap-3">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm">
+            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 rounded-t-3xl flex items-center gap-3">
               <div className="p-2 bg-purple-100 text-purple-700 rounded-lg">
                 <Tags size={20} />
               </div>
@@ -435,9 +474,106 @@ export default function PengaturanPage() {
               </div>
             </div>
           </div>
+        </div>
 
+        {/* Card 5: Manajemen Akses Admin (Full Width / Col Span 2) */}
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 text-amber-700 rounded-lg">
+                <Shield size={20} />
+              </div>
+              <h2 className="font-bold text-lg text-slate-900">Manajemen Akses Admin</h2>
+            </div>
+            <button 
+              onClick={() => setIsAdminModalOpen(true)}
+              className="px-4 py-2 bg-navy-900 text-white font-bold rounded-xl text-sm hover:bg-navy-800 transition flex items-center gap-2 shadow-md"
+            >
+              <Plus size={16} /> Admin Baru
+            </button>
+          </div>
+          <div className="p-6">
+            <p className="text-sm text-slate-500 mb-5">
+              Hanya warga yang akunnya sudah disetujui (ACC) dan biodatanya telah lengkap yang dapat diangkat menjadi Admin sistem.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {adminAktif.length === 0 ? (
+                <div className="col-span-full py-8 text-center text-sm font-medium text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                  Belum ada Admin yang terdaftar.
+                </div>
+              ) : (
+                adminAktif.map((warga) => (
+                  <div key={warga.id} className="p-4 rounded-xl border flex justify-between items-center gap-4 transition-colors bg-amber-50/30 border-amber-200">
+                    <div className="overflow-hidden">
+                      <p className="font-bold text-sm text-slate-900 truncate" title={warga.nama_lengkap}>{warga.nama_lengkap}</p>
+                      <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">Blok {warga.nomor_rumah}</p>
+                    </div>
+                    <button
+                      onClick={() => handleToggleAdmin(warga.user_id, warga.users?.role)}
+                      className="shrink-0 px-4 py-2 text-xs font-bold rounded-lg transition-colors border shadow-sm bg-white text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      Cabut Admin
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* MODAL: TAMBAH ADMIN BARU */}
+      <AnimatePresence>
+        {isAdminModalOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAdminModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl shrink-0">
+                  <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><Shield size={18} className="text-amber-500" /> Tambah Admin Baru</h3>
+                  <button onClick={() => setIsAdminModalOpen(false)} className="p-1.5 bg-white rounded-full hover:bg-slate-200 transition text-slate-400 shadow-sm border border-slate-200"><X size={18} /></button>
+              </div>
+              <div className="p-6 flex flex-col overflow-hidden">
+                <div className="relative mb-4 shrink-0">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Cari nama warga..."
+                    value={adminSearch}
+                    onChange={(e) => setAdminSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium text-slate-900"
+                  />
+                </div>
+                
+                <div className="overflow-y-auto flex-1 space-y-3 min-h-[250px] pr-1">
+                  {filteredCalonAdmin.length === 0 ? (
+                    <div className="text-center py-10 text-sm font-medium text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                      Tidak ada kandidat warga yang sesuai.
+                    </div>
+                  ) : (
+                    filteredCalonAdmin.map(warga => (
+                      <div key={warga.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex justify-between items-center gap-4 hover:border-slate-300 transition-colors">
+                        <div className="overflow-hidden">
+                          <p className="font-bold text-sm text-slate-900 truncate" title={warga.nama_lengkap}>{warga.nama_lengkap}</p>
+                          <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">Blok {warga.nomor_rumah}</p>
+                        </div>
+                        <button
+                          onClick={() => { handleToggleAdmin(warga.user_id, warga.users?.role); }}
+                          className="shrink-0 px-4 py-2 text-xs font-bold rounded-lg bg-navy-900 text-white hover:bg-navy-800 transition-colors shadow-sm"
+                        >
+                          + Admin
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

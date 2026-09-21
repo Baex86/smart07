@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SMART O7",
+  title: "SMART system RT 07 RW 06 GPM",
   description: "Sistem RT pintar RT 07 RW 06 Griya Permata Meri, Mojokerto",
 };
 
