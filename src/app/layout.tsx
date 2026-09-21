@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SMART system RT 07 RW 06 GPM",
   description: "Sistem RT pintar RT 07 RW 06 Griya Permata Meri, Mojokerto",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

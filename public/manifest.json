@@ -1,0 +1,15 @@
+{
+  "name": "SMART system RT 07 RW 06 GPM",
+  "short_name": "SmaRT 07",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1128",
+  "theme_color": "#0a1128",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
