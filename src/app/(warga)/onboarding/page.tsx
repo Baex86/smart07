@@ -19,6 +19,7 @@ export default function OnboardingPage() {
     tanggal_lahir: '',
     agama: 'Islam',
     pekerjaan: '',
+    status_perkawinan: 'Belum Kawin',
     status_tinggal: 'Tetap',
   });
 
@@ -138,6 +139,15 @@ export default function OnboardingPage() {
                   <option value="Hindu">Hindu</option>
                   <option value="Buddha">Buddha</option>
                   <option value="Konghucu">Konghucu</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-navy-700 mb-1">Status Perkawinan</label>
+                <select name="status_perkawinan" value={formData.status_perkawinan} onChange={handleChange} className="w-full px-4 py-3 border border-ivory-300 rounded-xl focus:ring-2 focus:ring-navy-400 focus:outline-none">
+                  <option value="Belum Kawin">Belum Kawin</option>
+                  <option value="Kawin">Kawin</option>
+                  <option value="Cerai Hidup">Cerai Hidup</option>
+                  <option value="Cerai Mati">Cerai Mati</option>
                 </select>
               </div>
               <div>

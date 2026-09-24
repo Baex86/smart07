@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Calculator, Settings, Inbox, LogOut, FileText, ShieldAlert, Eye, X, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, Calculator, Settings, Inbox, LogOut, FileText, ShieldAlert, Eye, X, Loader2, Store } from 'lucide-react';
 import { logoutUser, verifyRoleSwitch } from '@/app/actions/auth';
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ export default function MobileNavAdmin() {
     { name: 'Surat', icon: FileText, href: '/admin/surat' },
     { name: 'Warga', icon: Users, href: '/admin/warga' },
     { name: 'Kas', icon: Calculator, href: '/admin/keuangan' },
+    { name: 'Usaha', icon: Store, href: '/admin/badan-usaha' },
     { name: 'Setelan', icon: Settings, href: '/admin/pengaturan' },
   ];
 

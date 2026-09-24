@@ -18,7 +18,7 @@ export default function ProfilPage() {
   
   const [updateForm, setUpdateForm] = useState({
     nama_lengkap: '', no_wa: '', pekerjaan: '', status_tinggal: '', 
-    nik: '', tempat_lahir: '', tanggal_lahir: '', agama: '', password: ''
+    nik: '', tempat_lahir: '', tanggal_lahir: '', agama: '', status_perkawinan: '', password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -49,6 +49,7 @@ export default function ProfilPage() {
           tempat_lahir: data.profil.tempat_lahir || '',
           tanggal_lahir: data.profil.tanggal_lahir || '',
           agama: data.profil.agama || 'Islam',
+          status_perkawinan: data.profil.status_perkawinan || 'Belum Kawin',
           password: ''
         });
       }
@@ -221,6 +222,10 @@ export default function ProfilPage() {
                 <p className="font-medium text-navy-900">{profil.tempat_lahir || '-'}, {profil.tanggal_lahir ? new Date(profil.tanggal_lahir).toLocaleDateString('id-ID') : '-'}</p>
               </div>
               <div>
+                <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><User size={14}/> Status Perkawinan</label>
+                <p className="font-medium text-navy-900">{profil.status_perkawinan || '-'}</p>
+              </div>
+              <div>
                 <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><User size={14}/> Pekerjaan</label>
                 <p className="font-medium text-navy-900">{profil.pekerjaan || '-'}</p>
               </div>
@@ -353,6 +358,15 @@ export default function ProfilPage() {
                       <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Agama</label>
                       <select value={updateForm.agama} onChange={e => setUpdateForm({...updateForm, agama: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium appearance-none">
                         <option value="Islam">Islam</option><option value="Kristen">Kristen</option><option value="Katolik">Katolik</option><option value="Hindu">Hindu</option><option value="Buddha">Buddha</option><option value="Konghucu">Konghucu</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Status Perkawinan</label>
+                      <select value={updateForm.status_perkawinan} onChange={e => setUpdateForm({...updateForm, status_perkawinan: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium appearance-none">
+                        <option value="Belum Kawin">Belum Kawin</option>
+                        <option value="Kawin">Kawin</option>
+                        <option value="Cerai Hidup">Cerai Hidup</option>
+                        <option value="Cerai Mati">Cerai Mati</option>
                       </select>
                     </div>
                     <div>

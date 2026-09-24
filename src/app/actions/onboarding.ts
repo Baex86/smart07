@@ -65,6 +65,7 @@ export async function submitOnboarding(formData: any) {
   });
 
   if (error) return { success: false, error: error.message };
+  await supabase.from('buku_induk').update({ status_perkawinan: formData.status_perkawinan }).eq('id', uid);
 
   return { success: true };
 }

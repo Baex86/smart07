@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Calculator, Settings, LogOut, FileText, MessageSquareWarning, ShieldAlert, Eye, EyeOff, Loader2, X } from 'lucide-react';
+import { LayoutDashboard, Users, Calculator, Settings, LogOut, FileText, MessageSquareWarning, ShieldAlert, Eye, EyeOff, Loader2, X, Store } from 'lucide-react';
 import { logoutUser, verifyRoleSwitch } from '@/app/actions/auth';
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ export default function SidebarAdmin() {
     { name: 'Surat', icon: FileText, href: '/admin/surat' },
     { name: 'Buku Induk', icon: Users, href: '/admin/warga' },
     { name: 'Arus Kas', icon: Calculator, href: '/admin/keuangan' },
+    { name: 'Badan Usaha', icon: Store, href: '/admin/badan-usaha' },
     { name: 'Pengaturan', icon: Settings, href: '/admin/pengaturan' },
   ];
 
