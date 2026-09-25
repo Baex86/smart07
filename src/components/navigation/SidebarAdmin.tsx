@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Calculator, Settings, LogOut, FileText, MessageSquareWarning, ShieldAlert, Eye, EyeOff, Loader2, X, Store } from 'lucide-react';
 import { logoutUser, verifyRoleSwitch } from '@/app/actions/auth';
-import { useState, useRef } from 'react';
+import { getPendingLayananCount } from '@/app/actions/layanan';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SidebarAdmin() {
   const pathname = usePathname();
+  const [notifLayanan, setNotifLayanan] = useState(0);
+
   const menuItems = [
     { name: 'Dasbor', icon: LayoutDashboard, href: '/admin' },
     { name: 'Layanan', icon: MessageSquareWarning, href: '/admin/layanan' },
@@ -18,6 +21,10 @@ export default function SidebarAdmin() {
     { name: 'Badan Usaha', icon: Store, href: '/admin/badan-usaha' },
     { name: 'Pengaturan', icon: Settings, href: '/admin/pengaturan' },
   ];
+
+  useEffect(() => {
+    getPendingLayananCount().then(setNotifLayanan);
+  }, [pathname]); // Refresh notif tiap kali pindah halaman
 
   const handleLogout = async () => {
     await logoutUser();
@@ -85,11 +92,18 @@ export default function SidebarAdmin() {
             const Icon = item.icon;
             return (
               <Link key={item.name} href={item.href}>
-                <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
+                <div className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
                   isActive ? 'bg-gold text-navy-900 shadow-lg shadow-gold/20' : 'text-navy-200 hover:bg-navy-800 hover:text-ivory-50'
                 }`}>
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                  <span>{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                    <span>{item.name}</span>
+                  </div>
+                  {item.name === 'Layanan' && notifLayanan > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-extrabold shadow-sm animate-pulse">
+                      {notifLayanan > 99 ? '99+' : notifLayanan}
+                    </span>
+                  )}
                 </div>
               </Link>
             );

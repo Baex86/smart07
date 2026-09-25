@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Calculator, Settings, Inbox, LogOut, FileText, ShieldAlert, Eye, X, Loader2, Store } from 'lucide-react';
 import { logoutUser, verifyRoleSwitch } from '@/app/actions/auth';
-import { useState, useRef } from 'react';
+import { getPendingLayananCount } from '@/app/actions/layanan';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MobileNavAdmin() {
   const pathname = usePathname();
+  const [notifLayanan, setNotifLayanan] = useState(0);
+
   const menuItems = [
     { name: 'Dasbor', icon: LayoutDashboard, href: '/admin' },
     { name: 'Layanan', icon: Inbox, href: '/admin/layanan' },
@@ -18,6 +21,10 @@ export default function MobileNavAdmin() {
     { name: 'Usaha', icon: Store, href: '/admin/badan-usaha' },
     { name: 'Setelan', icon: Settings, href: '/admin/pengaturan' },
   ];
+
+  useEffect(() => {
+    getPendingLayananCount().then(setNotifLayanan);
+  }, [pathname]);
 
   const handleLogout = async () => {
     if (!confirm('Yakin ingin keluar dari portal Admin?')) return;
@@ -85,9 +92,14 @@ export default function MobileNavAdmin() {
             const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(`${item.href}/`));
             const Icon = item.icon;
             return (
-              <Link key={item.name} href={item.href} className="flex-1 flex flex-col items-center justify-center gap-1 px-3">
-                <div className={`p-1.5 rounded-full transition-colors duration-300 ${isActive ? 'bg-gold text-navy-900' : 'text-navy-300'}`}>
+              <Link key={item.name} href={item.href} className="relative flex-1 flex flex-col items-center justify-center gap-1 px-3">
+                <div className={`relative p-1.5 rounded-full transition-colors duration-300 ${isActive ? 'bg-gold text-navy-900' : 'text-navy-300'}`}>
                   <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  {item.name === 'Layanan' && notifLayanan > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white shadow-sm border border-navy-900 animate-pulse">
+                      {notifLayanan > 99 ? '99+' : notifLayanan}
+                    </span>
+                  )}
                 </div>
                 <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-gold' : 'text-navy-400'}`}>{item.name}</span>
               </Link>

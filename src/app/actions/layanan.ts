@@ -181,3 +181,22 @@ export async function tolakTiketReset(tiketId: string) {
     return { success: false, message: error.message }; 
   }
 }
+
+// --- FUNGSI BARU: HITUNG TOTAL ANTREAN NOTIFIKASI NAVBAR ---
+export async function getPendingLayananCount() {
+  try {
+    const [surat, aduan, usulan, akun, draft, reset] = await Promise.all([
+      supabase.from('surat_pengantar').select('id', { count: 'exact', head: true }).eq('status', 'menunggu'),
+      supabase.from('aduan_warga').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+      supabase.from('usulan_warga').select('id', { count: 'exact', head: true }).eq('status', 'review'),
+      supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'warga').eq('is_approved', false),
+      supabase.from('draft_perubahan_data').select('id', { count: 'exact', head: true }).eq('status', 'menunggu'),
+      supabase.from('tiket_reset_password').select('id', { count: 'exact', head: true }).eq('status', 'menunggu')
+    ]);
+
+    const total = (surat.count || 0) + (aduan.count || 0) + (usulan.count || 0) + (akun.count || 0) + (draft.count || 0) + (reset.count || 0);
+    return total;
+  } catch (error) {
+    return 0;
+  }
+}
