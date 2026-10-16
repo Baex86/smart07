@@ -6,7 +6,6 @@ import { LayoutDashboard, Users, Calculator, Settings, LogOut, FileText, Message
 import { logoutUser, verifyRoleSwitch } from '@/app/actions/auth';
 import { getPendingLayananCount } from '@/app/actions/layanan';
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SidebarAdmin() {
   const pathname = usePathname();
@@ -118,11 +117,11 @@ export default function SidebarAdmin() {
         </div>
       </aside>
 
-      <AnimatePresence>
+      <>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-navy-900/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-navy-900/80 backdrop-blur-sm" />
+            <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
               <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50">
                   <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><ShieldAlert size={18} className="text-gold"/> Otorisasi Akses</h3>
                   <button onClick={() => setIsModalOpen(false)} className="p-1.5 bg-white rounded-full text-navy-400 border border-ivory-200"><X size={18} /></button>
@@ -140,10 +139,10 @@ export default function SidebarAdmin() {
                   </button>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </>
     </>
   );
 }

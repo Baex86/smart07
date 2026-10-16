@@ -1,43 +1,80 @@
 @import "tailwindcss";
 
-/* Konfigurasi Tema Tailwind v4 (Pengganti tailwind.config.ts) */
+/* ============================================================
+   SMART SYSTEM — Design System (Modern & Tegas / Fintech)
+   Font  : Sora (display) + Public Sans (body)
+   Warna : Deep navy + Amber accent, netral hangat
+   ============================================================ */
+
 @theme {
+  /* ----- Typography ----- */
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* ----- Accent (Amber / kuning tegas) ----- */
+  --color-accent-50: #FFF8E6;
+  --color-accent-100: #FFEDBF;
+  --color-accent-200: #FFDE85;
+  --color-accent-300: #FFCD4D;
+  --color-accent-400: #F5B301;
+  --color-accent-500: #D99C00;
+  --color-accent-600: #B37F00;
+  --color-accent: #F5B301;
+
+  /* ----- Navy (deep, hampir hitam-biru) ----- */
+  --color-navy-50: #F2F5F9;
+  --color-navy-100: #E3E9F1;
+  --color-navy-200: #C5D1E0;
+  --color-navy-300: #97A9C2;
+  --color-navy-400: #647A9C;
+  --color-navy-500: #3F5676;
+  --color-navy-600: #26364F;
+  --color-navy-700: #182438;
+  --color-navy-800: #101A2B;
+  --color-navy-900: #0B1220;
+  --color-navy: #0B1220;
+
+  /* ----- Netral hangat (pengganti ivory) ----- */
+  --color-paper: #F7F6F3;
+  --color-surface: #FFFFFF;
+
+  /* ----- Alias kompatibilitas token lama (migrasi bertahap) ----- */
   --color-ivory-50: #FFFFFF;
-  --color-ivory-100: #FEFDFB;
-  --color-ivory-200: #FDFBF7;
-  --color-ivory-300: #F5F0E6;
-  --color-ivory-400: #EBE3D5;
-  --color-ivory: #FDFBF7;
+  --color-ivory-100: #FBFBF9;
+  --color-ivory-200: #F7F6F3;
+  --color-ivory-300: #ECEAE3;
+  --color-ivory-400: #D9D6CC;
+  --color-ivory: #F7F6F3;
+  --color-gold-light: #FFDE85;
+  --color-gold: #F5B301;
 
-  --color-navy-50: #E6E8EB;
-  --color-navy-100: #B0B8C4;
-  --color-navy-200: #8A96A8;
-  --color-navy-300: #5D6E87;
-  --color-navy-400: #3E5270;
-  --color-navy-500: #1E365C;
-  --color-navy-600: #162A4A;
-  --color-navy-700: #112039;
-  --color-navy-800: #0A192F;
-  --color-navy-900: #061020;
-  --color-navy: #0A192F;
+  /* ----- Radius halus (tidak semua membulat besar) ----- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 
-  --color-gold-light: #D4C29D;
-  --color-gold: #B89B5E;
+  /* ----- Shadow halus (fintech: tegas, bukan blur tebal) ----- */
+  --shadow-card: 0 1px 2px rgb(11 18 32 / 0.04), 0 4px 16px rgb(11 18 32 / 0.05);
+  --shadow-pop: 0 2px 4px rgb(11 18 32 / 0.06), 0 12px 32px rgb(11 18 32 / 0.12);
 }
 
-/* Reset Base Style & Terapkan Warna */
 @layer base {
   html, body {
-    @apply bg-ivory-200 text-navy-800 antialiased selection:bg-gold-light selection:text-navy-900;
+    @apply bg-paper text-navy-900 antialiased selection:bg-accent-200 selection:text-navy-900;
+    font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
   }
 
-  /* Reset form focus ring biar elegan (nggak biru terang bawaan browser) */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sora), var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
   input, textarea, select {
-    @apply focus:outline-none focus:ring-1 focus:ring-navy-400 focus:border-navy-400 transition-colors duration-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent-400/60 focus:border-accent-400 transition-colors duration-150;
   }
 }
 
-/* Utilitas untuk Framer Motion agar tidak berantakan saat SSR */
-.framer-motion-initial {
-  opacity: 0;
-}
+/* Utility: sembunyikan scrollbar untuk nav/daftar horizontal */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+

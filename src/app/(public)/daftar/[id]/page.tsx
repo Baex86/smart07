@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../../lib/supabaseClient'; // Sesuaikan jumlah ../ jika masih merah, atau pakai '@/lib/supabaseClient'
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export default function DaftarKeluargaPage() {
@@ -110,10 +109,7 @@ export default function DaftarKeluargaPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-ivory-200">
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      <div
         className="w-full max-w-md bg-ivory-50 p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-ivory-300"
       >
         <div className="text-center mb-10">
@@ -122,14 +118,14 @@ export default function DaftarKeluargaPage() {
         </div>
 
         {errorMessage && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 p-4 bg-red-50/50 text-red-600 text-sm rounded-lg border border-red-100 text-center">
+          <div className="mb-6 p-4 bg-red-50/50 text-red-600 text-sm rounded-lg border border-red-100 text-center">
             {errorMessage}
-          </motion.div>
+          </div>
         )}
         {successMessage && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 p-4 bg-green-50/50 text-green-600 text-sm rounded-lg border border-green-100 text-center">
+          <div className="mb-6 p-4 bg-green-50/50 text-green-600 text-sm rounded-lg border border-green-100 text-center">
             {successMessage}
-          </motion.div>
+          </div>
         )}
 
         {!errorMessage.includes('tidak berlaku') && !errorMessage.includes('tidak ditemukan') && (
@@ -183,7 +179,7 @@ export default function DaftarKeluargaPage() {
             Kembali ke Login
           </Link>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

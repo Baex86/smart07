@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { executeResetPassword } from '@/app/actions/auth';
 
@@ -52,9 +51,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-ivory-200">
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
+      <div
         className="w-full max-w-md bg-ivory-50 p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-ivory-300"
       >
         <div className="text-center mb-8">
@@ -111,7 +108,7 @@ export default function ResetPasswordPage() {
             </div>
           </>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

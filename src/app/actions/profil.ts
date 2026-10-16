@@ -69,13 +69,34 @@ export async function ajukanPerubahanData(formData: any, password: string) {
     path: '/',
   });
 
-  const { error } = await supabase.from('draft_perubahan_data').insert([{
-    buku_induk_id: uid,
-    data_baru: formData,
-    status: 'menunggu'
-  }]);
+  // Ambil data lama untuk audit log
+  const { data: dataLama } = await supabase
+    .from('buku_induk')
+    .select('nama_lengkap, no_wa, pekerjaan, status_tinggal, nik, tempat_lahir, tanggal_lahir, agama')
+    .eq('id', uid)
+    .single();
+
+  const { data: draftInserted, error } = await supabase
+    .from('draft_perubahan_data')
+    .insert([{
+      buku_induk_id: uid,
+      data_lama: dataLama ?? null,
+      data_baru: formData,
+      status: 'menunggu'
+    }])
+    .select('id')
+    .single();
 
   if (error) throw new Error(error.message);
+
+  // Tulis log audit (aksi: diajukan)
+  await supabase.from('log_perubahan_data').insert([{
+    draft_id: draftInserted?.id ?? null,
+    buku_induk_id: uid,
+    aksi: 'diajukan',
+    data_lama: dataLama ?? null,
+    data_baru: formData ?? null
+  }]);
 
   return { success: true };
 }

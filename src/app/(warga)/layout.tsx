@@ -7,23 +7,23 @@ export default function WargaLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-ivory-200">
-      {/* Sidebar untuk Desktop (Tersembunyi di Mobile) */}
+    <div className="min-h-screen bg-paper">
+      {/* Sidebar untuk Desktop (Tersembunyi di Mobile & Tablet) */}
       <SidebarWarga />
 
       {/* Konten Utama */}
       {/* 
-        md:pl-64 -> Menggeser konten ke kanan sebesar lebar sidebar di PC
-        pb-20 -> Memberi ruang kosong di bawah agar konten tidak tertutup Bottom Nav di HP
-        md:pb-0 -> Menghilangkan padding bawah di PC karena tidak ada Bottom Nav
+        lg:pl-64 -> Menggeser konten ke kanan sebesar lebar sidebar di layar besar
+        pb-24 -> Ruang kosong di bawah agar konten tidak tertutup Bottom Nav di HP
+        lg:pb-0 -> Menghilangkan padding bawah di PC karena tidak ada Bottom Nav
       */}
-      <main className="md:pl-64 pb-20 md:pb-0 min-h-screen transition-all duration-300 ease-in-out">
-        <div className="max-w-5xl mx-auto w-full p-4 md:p-8">
+      <main className="lg:pl-64 pb-24 lg:pb-0 min-h-screen">
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
           {children}
         </div>
       </main>
 
-      {/* Bottom Nav untuk Mobile (Tersembunyi di Desktop) */}
+      {/* Bottom Nav untuk Mobile & Tablet (Tersembunyi di Desktop) */}
       <BottomNavWarga />
     </div>
   );

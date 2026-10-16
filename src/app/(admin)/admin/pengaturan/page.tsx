@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../../../lib/supabaseClient';
 import { Save, Loader2, MapPin, Building, Phone, AlertCircle, Tags, Trash2, Plus, ChevronDown, Megaphone, Shield, Search, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PengaturanPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -434,17 +433,16 @@ export default function PengaturanPage() {
                       <span className="text-navy-900 font-medium capitalize">{newKategori.tipe}</span>
                       <ChevronDown size={16} className={`text-navy-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
-                    <AnimatePresence>
+                    <>
                       {isDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
+                        <div
                           className="absolute z-50 w-full mt-2 bg-white border border-ivory-200 rounded-xl shadow-xl py-1"
                         >
                           <div onClick={() => { setNewKategori({...newKategori, tipe: 'keluar'}); setIsDropdownOpen(false); }} className="px-4 py-2.5 hover:bg-ivory-50 cursor-pointer text-navy-900 text-sm font-medium border-b border-ivory-100">Pengeluaran</div>
                           <div onClick={() => { setNewKategori({...newKategori, tipe: 'masuk'}); setIsDropdownOpen(false); }} className="px-4 py-2.5 hover:bg-ivory-50 cursor-pointer text-navy-900 text-sm font-medium">Pemasukan</div>
-                        </motion.div>
+                        </div>
                       )}
-                    </AnimatePresence>
+                    </>
                   </div>
                   <button type="submit" className="px-6 py-3 bg-navy-900 text-white rounded-xl hover:bg-navy-800 font-bold text-sm shadow-md shrink-0">
                     <Plus size={18} />
@@ -523,11 +521,11 @@ export default function PengaturanPage() {
       </div>
 
       {/* MODAL: TAMBAH ADMIN BARU */}
-      <AnimatePresence>
+      <>
         {isAdminModalOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAdminModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+            <div onClick={() => setIsAdminModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
+            <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
               <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl shrink-0">
                   <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><Shield size={18} className="text-amber-500" /> Tambah Admin Baru</h3>
                   <button onClick={() => setIsAdminModalOpen(false)} className="p-1.5 bg-white rounded-full hover:bg-slate-200 transition text-slate-400 shadow-sm border border-slate-200"><X size={18} /></button>
@@ -569,10 +567,10 @@ export default function PengaturanPage() {
                   )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
+      </>
 
     </div>
   );

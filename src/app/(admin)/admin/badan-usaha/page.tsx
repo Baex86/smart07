@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, Plus, TrendingUp, TrendingDown, Store, X, Calendar, ArrowUpRight, ArrowDownRight, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { getKasBadanUsaha, catatKasBadanUsaha, hapusKasBadanUsaha } from '@/app/actions/badan_usaha';
 
 export default function BadanUsahaAdminPage() {
@@ -115,11 +114,11 @@ export default function BadanUsahaAdminPage() {
         )}
       </div>
 
-      <AnimatePresence>
+      <>
         {isModalOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+            <div onClick={() => setIsModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
+            <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
               <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50 shrink-0 rounded-t-3xl">
                 <h2 className="text-xl font-bold text-navy-900">Catat Transaksi Usaha</h2>
                 <button onClick={() => setIsModalOpen(false)} className="p-2 bg-white rounded-full hover:bg-ivory-200 transition text-navy-400"><X size={18} /></button>
@@ -153,10 +152,10 @@ export default function BadanUsahaAdminPage() {
                   </button>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

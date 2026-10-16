@@ -12,7 +12,7 @@ export async function getDashboardData() {
   const now = new Date().toISOString();
 
   // Tarik profil, tagihan tunggakan paling lama, pengumuman, dan riwayat aktivitas terbaru
-  const [profilRes, iuranRes, pengumumanRes, suratNotifRes, iuranNotifRes] = await Promise.allSettled([
+  const [profilRes, iuranRes, pengumumanRes, suratNotifRes, iuranNotifRes, aduanNotifRes, usulanNotifRes] = await Promise.allSettled([
     supabase.from('buku_induk').select('nama_lengkap, nomor_rumah').eq('id', uid).single(),
     supabase.from('iuran_kas')
       .select('*')
@@ -24,7 +24,9 @@ export async function getDashboardData() {
       .single(),
     supabase.from('pengumuman').select('id, pesan, batas_waktu').gte('batas_waktu', now).order('batas_waktu', { ascending: true }),
     supabase.from('surat_pengantar').select('id, jenis_surat, status, created_at').eq('buku_induk_id', uid).in('status', ['selesai', 'ditolak']).order('created_at', { ascending: false }).limit(5),
-    supabase.from('iuran_kas').select('id, nama_iuran, bulan, tahun, status, created_at').eq('buku_induk_id', uid).eq('status', 'lunas').order('created_at', { ascending: false }).limit(5)
+    supabase.from('iuran_kas').select('id, nama_iuran, bulan, tahun, status, created_at').eq('buku_induk_id', uid).eq('status', 'lunas').order('created_at', { ascending: false }).limit(5),
+    supabase.from('aduan_warga').select('id, kode_tiket, judul, status, tanggapan_admin, created_at').eq('buku_induk_id', uid).neq('status', 'open').order('created_at', { ascending: false }).limit(5),
+    supabase.from('usulan_warga').select('id, kode_tiket, judul, status, tanggapan_admin, created_at').eq('buku_induk_id', uid).neq('status', 'review').order('created_at', { ascending: false }).limit(5)
   ]);
 
   let tagihan = null;
@@ -54,6 +56,30 @@ export async function getDashboardData() {
         judul: `Pembayaran ${i.nama_iuran} periode ${i.bulan}/${i.tahun} Berhasil Dikonfirmasi`,
         waktu: i.created_at,
         status: i.status
+      });
+    });
+  }
+
+  if (aduanNotifRes.status === 'fulfilled' && aduanNotifRes.value.data) {
+    aduanNotifRes.value.data.forEach((a: any) => {
+      rawNotif.push({
+        id: `aduan-${a.id}`,
+        tipe: 'aduan',
+        judul: `Aduan ${a.kode_tiket} Telah Ditanggapi`,
+        waktu: a.created_at,
+        status: a.status
+      });
+    });
+  }
+
+  if (usulanNotifRes.status === 'fulfilled' && usulanNotifRes.value.data) {
+    usulanNotifRes.value.data.forEach((u: any) => {
+      rawNotif.push({
+        id: `usulan-${u.id}`,
+        tipe: 'usulan',
+        judul: `Usulan ${u.kode_tiket} Telah Ditanggapi`,
+        waktu: u.created_at,
+        status: u.status
       });
     });
   }

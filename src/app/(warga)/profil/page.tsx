@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2, User, Users, MapPin, CreditCard, Phone, Calendar, Edit3, LogOut, CheckCircle2, X, Plus, Trash2, Edit2, MessageCircle, Eye, EyeOff, ShieldAlert } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import PageHeader from '@/components/warga/PageHeader';
 import { getProfilWarga, ajukanPerubahanData, tambahKeluarga, editKeluarga, hapusKeluarga } from '../../actions/profil';
 import { logoutUser, verifyRoleSwitch } from '../../actions/auth';
 
@@ -11,7 +11,6 @@ export default function ProfilPage() {
   const [keluarga, setKeluarga] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // State Modal Perbarui Data Utama (LENGKAP)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftStatus, setDraftStatus] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({ show: false, message: '', type: 'success' });
@@ -22,12 +21,10 @@ export default function ProfilPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
 
-  // State Modal Manajemen Keluarga
   const [isKeluargaModalOpen, setIsKeluargaModalOpen] = useState(false);
   const [keluargaMode, setKeluargaMode] = useState<'tambah' | 'edit'>('tambah');
   const [keluargaForm, setKeluargaForm] = useState({ id: '', nama_lengkap: '', status_hubungan: 'Anak', nik: '', no_wa: '' });
 
-  // State Switch Role Admin
   const [isAdminSwitchOpen, setIsAdminSwitchOpen] = useState(false);
   const [switchPassword, setSwitchPassword] = useState('');
   const [showSwitchPassword, setShowSwitchPassword] = useState(false);
@@ -104,8 +101,9 @@ export default function ProfilPage() {
         status_tinggal: updateForm.status_tinggal,
         nik: updateForm.nik,
         tempat_lahir: updateForm.tempat_lahir,
-        tanggal_lahir: updateForm.tanggal_lahir,
-        agama: updateForm.agama
+        tanggal_lahir: updateForm.tanggal_lahir || null,
+        agama: updateForm.agama,
+        status_perkawinan: updateForm.status_perkawinan
       };
 
       await ajukanPerubahanData(payload, updateForm.password);
@@ -178,66 +176,88 @@ export default function ProfilPage() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pb-24 md:pb-8">
-      <div>
-        <h1 className="text-3xl font-extrabold text-navy-900 tracking-tight">Profil Warga</h1>
-        <p className="text-navy-500 mt-1 text-sm font-medium">Informasi kependudukan Anda dan keluarga.</p>
-      </div>
+    <div className="space-y-6 pb-24 md:pb-8">
+      <PageHeader
+        title="Profil Warga"
+        description="Kelola data kependudukan Anda dan anggota keluarga di satu tempat."
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Kolom Kiri: Profil Pribadi */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white border border-ivory-300 rounded-2xl shadow-sm overflow-hidden">
-            <div className="bg-navy-900 p-6 text-ivory-50 flex items-center gap-4 relative overflow-hidden">
-              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-gold/20 rounded-full blur-2xl"></div>
-              <div className="w-16 h-16 bg-gold rounded-full flex items-center justify-center text-navy-900 shadow-inner z-10">
-                <User size={32} />
-              </div>
-              <div className="z-10">
-                <h2 className="text-2xl font-extrabold tracking-tight leading-tight">{profil.nama_lengkap}</h2>
-                <p className="text-navy-200 text-xs font-bold uppercase tracking-wider mt-1">{profil.status_hubungan || 'Warga'}</p>
+          <div className="bg-surface border border-navy-100 rounded-2xl shadow-card overflow-hidden">
+            <div className="relative bg-gradient-to-br from-navy-800 via-navy-900 to-navy-900 p-6 md:p-8 text-white">
+              <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, #f5b301 0, transparent 45%)' }} />
+              <div className="relative flex items-center gap-4 md:gap-5">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-accent text-navy-900 flex items-center justify-center shrink-0 ring-4 ring-white/10 shadow-pop">
+                  <User size={34} />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight leading-tight">{profil.nama_lengkap || 'Warga'}</h2>
+                  <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-accent/15 border border-accent/30 text-accent text-xs font-semibold uppercase tracking-wide">
+                    {profil.status_hubungan || 'Warga'}
+                  </span>
+                </div>
               </div>
             </div>
-            
-            <div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><CreditCard size={14}/> NIK</label>
-                <p className="font-medium text-navy-900">{profil.nik || '-'}</p>
+            <div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-navy-50/60 border border-navy-100">
+                <span className="w-9 h-9 rounded-lg bg-white border border-navy-100 text-navy-600 flex items-center justify-center shrink-0"><CreditCard size={16} /></span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">NIK</p>
+                  <p className="font-semibold text-navy-900 truncate">{profil.nik || '-'}</p>
+                </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><CreditCard size={14}/> Nomor KK</label>
-                <p className="font-medium text-navy-900">{profil.no_kk || '-'}</p>
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-navy-50/60 border border-navy-100">
+                <span className="w-9 h-9 rounded-lg bg-white border border-navy-100 text-navy-600 flex items-center justify-center shrink-0"><Users size={16} /></span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">Nomor KK</p>
+                  <p className="font-semibold text-navy-900 truncate">{profil.no_kk || '-'}</p>
+                </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><Phone size={14}/> WhatsApp</label>
-                <p className="font-medium text-navy-900">{profil.no_wa || '-'}</p>
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-navy-50/60 border border-navy-100">
+                <span className="w-9 h-9 rounded-lg bg-white border border-navy-100 text-navy-600 flex items-center justify-center shrink-0"><Phone size={16} /></span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">WhatsApp</p>
+                  <p className="font-semibold text-navy-900 truncate">{profil.no_wa || '-'}</p>
+                </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><MapPin size={14}/> Nomor Rumah</label>
-                <p className="font-medium text-navy-900 font-mono bg-ivory-100 px-2 py-0.5 rounded w-fit">{profil.nomor_rumah || '-'}</p>
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-navy-50/60 border border-navy-100">
+                <span className="w-9 h-9 rounded-lg bg-white border border-navy-100 text-navy-600 flex items-center justify-center shrink-0"><MapPin size={16} /></span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">Nomor Rumah</p>
+                  <p className="font-semibold text-navy-900 font-mono truncate">{profil.nomor_rumah || '-'}</p>
+                </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><Calendar size={14}/> TTL</label>
-                <p className="font-medium text-navy-900">{profil.tempat_lahir || '-'}, {profil.tanggal_lahir ? new Date(profil.tanggal_lahir).toLocaleDateString('id-ID') : '-'}</p>
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-navy-50/60 border border-navy-100">
+                <span className="w-9 h-9 rounded-lg bg-white border border-navy-100 text-navy-600 flex items-center justify-center shrink-0"><Calendar size={16} /></span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">Tempat, Tgl Lahir</p>
+                  <p className="font-semibold text-navy-900 truncate">{profil.tempat_lahir || '-'}, {profil.tanggal_lahir ? new Date(profil.tanggal_lahir).toLocaleDateString('id-ID') : '-'}</p>
+                </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><User size={14}/> Status Perkawinan</label>
-                <p className="font-medium text-navy-900">{profil.status_perkawinan || '-'}</p>
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-navy-50/60 border border-navy-100">
+                <span className="w-9 h-9 rounded-lg bg-white border border-navy-100 text-navy-600 flex items-center justify-center shrink-0"><User size={16} /></span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">Status Perkawinan</p>
+                  <p className="font-semibold text-navy-900 truncate">{profil.status_perkawinan || '-'}</p>
+                </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 text-xs font-bold text-navy-400 uppercase tracking-wider mb-1"><User size={14}/> Pekerjaan</label>
-                <p className="font-medium text-navy-900">{profil.pekerjaan || '-'}</p>
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-navy-50/60 border border-navy-100">
+                <span className="w-9 h-9 rounded-lg bg-white border border-navy-100 text-navy-600 flex items-center justify-center shrink-0"><User size={16} /></span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">Pekerjaan</p>
+                  <p className="font-semibold text-navy-900 truncate">{profil.pekerjaan || '-'}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Kolom Kanan: Daftar Keluarga & Action */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white border border-ivory-300 rounded-2xl shadow-sm p-6 flex flex-col h-full">
-            <h3 className="text-lg font-extrabold text-navy-900 flex items-center gap-2 mb-5">
-              <Users className="text-gold" size={20} /> Anggota Keluarga
+          <div className="bg-surface border border-navy-100 rounded-2xl shadow-card p-6 flex flex-col h-full">
+            <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-5">
+              <Users className="text-accent" size={20} /> Anggota Keluarga
             </h3>
             
             <div className="flex-1 space-y-3 mb-5">
@@ -245,35 +265,37 @@ export default function ProfilPage() {
                 keluarga.map((k) => {
                   const butuhPerhatian = !k.user_id || !k.is_completed;
                   return (
-                    <div key={k.id} className="p-4 bg-ivory-50 border border-ivory-200 rounded-xl group relative">
-                      <div className="pr-20"> 
-                        <p className="font-bold text-navy-900 text-sm leading-tight truncate">{k.nama_lengkap}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[10px] font-extrabold text-navy-400 uppercase tracking-wider">{k.status_hubungan}</span>
-                          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase tracking-wider border ${!butuhPerhatian ? 'bg-green-100 text-green-700 border-green-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
-                            {!butuhPerhatian ? 'Aktif' : (!k.user_id ? 'Belum Login' : 'Data Belum Lengkap')}
+                    <div key={k.id} className="p-4 bg-white border border-navy-100 rounded-xl shadow-card hover:border-navy-200 transition-colors flex items-center gap-3 group">
+                      <div className="w-11 h-11 rounded-full bg-navy-900 text-accent flex items-center justify-center shrink-0 font-display font-bold text-sm">
+                        {k.nama_lengkap?.trim().charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-navy-900 text-sm leading-tight truncate">{k.nama_lengkap}</p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">{k.status_hubungan}</span>
+                          <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wide border ${!butuhPerhatian ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                            {!butuhPerhatian ? 'Aktif' : (!k.user_id ? 'Belum Login' : 'Belum Lengkap')}
                           </span>
                         </div>
                       </div>
-                      
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 shrink-0">
                         {k.no_wa && (
-                          <a 
+                          <a
                             href={generateWALink(k)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                             title={butuhPerhatian ? "Kirim Link Pendaftaran via WA" : "Hubungi via WA"}
                           >
-                            <MessageCircle size={16} />
+                            <MessageCircle size={18} />
                           </a>
                         )}
-                        <button onClick={() => openEditKeluarga(k)} className="p-1.5 text-navy-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
-                          <Edit2 size={14} />
+                        <button onClick={() => openEditKeluarga(k)} className="p-2 text-navy-400 hover:text-navy-700 hover:bg-navy-100 rounded-lg transition-colors">
+                          <Edit2 size={18} />
                         </button>
                         {!k.user_id && (
-                          <button onClick={() => handleDeleteKeluarga(k.id, k.nama_lengkap)} className="p-1.5 text-navy-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
-                            <Trash2 size={14} />
+                          <button onClick={() => handleDeleteKeluarga(k.id, k.nama_lengkap)} className="p-2 text-navy-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 size={18} />
                           </button>
                         )}
                       </div>
@@ -281,227 +303,223 @@ export default function ProfilPage() {
                   );
                 })
               ) : (
-                <div className="text-center py-8 bg-ivory-50 border border-dashed border-ivory-300 rounded-xl">
+                <div className="text-center py-8 bg-navy-50 border border-dashed border-navy-200 rounded-lg">
                   <p className="text-sm font-medium text-navy-400">Tidak ada tanggungan.</p>
                 </div>
               )}
             </div>
             <button 
               onClick={openTambahKeluarga}
-              className="w-full py-3 border-2 border-dashed border-ivory-300 text-navy-600 rounded-xl font-bold text-sm hover:bg-ivory-50 transition-colors flex justify-center items-center gap-2"
+              className="w-full py-3 border-2 border-dashed border-navy-200 text-navy-600 rounded-lg font-semibold text-sm hover:bg-navy-50 transition-colors flex justify-center items-center gap-2"
             >
               <Plus size={18} /> Tambah Anggota
             </button>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {profil?.users?.role === 'admin' && (
+          <div className="bg-surface border border-navy-100 rounded-2xl shadow-card p-6">
+            <h3 className="text-sm font-bold text-navy-400 uppercase tracking-wide mb-4">Akun & Aksi</h3>
+            <div className="flex flex-col gap-3">
               <button 
-                onClick={() => setIsAdminSwitchOpen(true)}
-                className="w-full py-3.5 bg-gold text-navy-900 font-extrabold rounded-xl hover:bg-gold-light transition-all flex justify-center items-center gap-2 shadow-md mb-2"
+                onClick={() => setIsEditModalOpen(true)} 
+                className="w-full py-3 bg-navy-900 text-white font-semibold rounded-xl hover:bg-navy-800 transition-colors flex justify-center items-center gap-2 shadow-card"
               >
-                <ShieldAlert size={18} /> Buka Mode Admin
+                <Edit3 size={18} /> Ajukan Perubahan Profil
               </button>
-            )}
-            <button 
-              onClick={() => setIsEditModalOpen(true)} 
-              className="w-full py-3.5 bg-navy-900 text-ivory-50 font-bold rounded-xl hover:bg-navy-800 transition-all flex justify-center items-center gap-2 shadow-md"
-            >
-              <Edit3 size={18} /> Ajukan Perubahan Profil
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="w-full py-3.5 bg-red-50 text-red-600 border border-red-200 font-bold rounded-xl hover:bg-red-600 hover:text-white transition-all flex justify-center items-center gap-2 group"
-            >
-              <LogOut size={18} className="group-hover:rotate-12 transition-transform" /> 
-              Keluar dari Sistem
-            </button>
+              {profil?.users?.role === 'admin' && (
+                <button 
+                  onClick={() => setIsAdminSwitchOpen(true)}
+                  className="w-full py-3 bg-accent text-navy-900 font-semibold rounded-xl hover:bg-accent/90 transition-colors flex justify-center items-center gap-2"
+                >
+                  <ShieldAlert size={18} /> Buka Mode Admin
+                </button>
+              )}
+              <button 
+                onClick={handleLogout}
+                className="w-full py-3 bg-white text-red-600 border border-red-200 font-semibold rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors flex justify-center items-center gap-2"
+              >
+                <LogOut size={18} /> Keluar dari Sistem
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* MODAL 1: PERBARUI DATA UTAMA (LENGKAP) */}
-      <AnimatePresence>
-        {isEditModalOpen && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsEditModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
-              <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50 rounded-t-3xl shrink-0">
-                  <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><Edit3 size={18} className="text-gold" /> Perbarui Data Diri</h3>
-                  <button onClick={() => setIsEditModalOpen(false)} className="p-1.5 bg-white rounded-full hover:bg-ivory-200 transition text-navy-400 shadow-sm border border-ivory-200"><X size={18} /></button>
-              </div>
-              <div className="p-6 overflow-y-auto">
-                <p className="text-sm text-navy-500 mb-6 leading-relaxed">Ajukan perubahan biodata lengkap Anda. Data baru akan ditinjau Admin RT sebelum diterapkan secara permanen.</p>
-                
-                {draftStatus.show && (
-                  <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 text-sm font-medium ${draftStatus.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
-                    {draftStatus.type === 'success' ? <CheckCircle2 size={20} className="shrink-0 mt-0.5" /> : <X size={20} className="shrink-0 mt-0.5" />}
-                    {draftStatus.message}
-                  </div>
-                )}
+      {/* MODAL 1: PERBARUI DATA UTAMA */}
+      {isEditModalOpen && (
+        <>
+          <div onClick={() => setIsEditModalOpen(false)} className="fixed inset-0 bg-navy-900/60 z-50" />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface rounded-xl shadow-card border border-navy-100 z-50 flex flex-col max-h-[90vh]">
+            <div className="px-6 py-5 border-b border-navy-100 flex justify-between items-center shrink-0">
+                <h3 className="font-semibold text-navy-900 flex items-center gap-2"><Edit3 size={18} className="text-accent" /> Perbarui Data Diri</h3>
+                <button onClick={() => setIsEditModalOpen(false)} className="p-1.5 bg-white rounded-md hover:bg-navy-50 transition text-navy-400 border border-navy-200"><X size={18} /></button>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              <p className="text-sm text-navy-500 mb-6 leading-relaxed">Ajukan perubahan biodata lengkap Anda. Data baru akan ditinjau Admin RT sebelum diterapkan secara permanen.</p>
+              
+              {draftStatus.show && (
+                <div className={`mb-6 p-4 rounded-lg flex items-start gap-3 text-sm font-medium ${draftStatus.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                  {draftStatus.type === 'success' ? <CheckCircle2 size={20} className="shrink-0 mt-0.5" /> : <X size={20} className="shrink-0 mt-0.5" />}
+                  {draftStatus.message}
+                </div>
+              )}
 
-                <form onSubmit={handleUpdateDataUtama} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
-                      <input type="text" required value={updateForm.nama_lengkap} onChange={e => setUpdateForm({...updateForm, nama_lengkap: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Nomor WhatsApp</label>
-                      <input type="text" value={updateForm.no_wa} onChange={e => setUpdateForm({...updateForm, no_wa: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">NIK</label>
-                      <input type="number" value={updateForm.nik} onChange={e => setUpdateForm({...updateForm, nik: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Agama</label>
-                      <select value={updateForm.agama} onChange={e => setUpdateForm({...updateForm, agama: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium appearance-none">
-                        <option value="Islam">Islam</option><option value="Kristen">Kristen</option><option value="Katolik">Katolik</option><option value="Hindu">Hindu</option><option value="Buddha">Buddha</option><option value="Konghucu">Konghucu</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Status Perkawinan</label>
-                      <select value={updateForm.status_perkawinan} onChange={e => setUpdateForm({...updateForm, status_perkawinan: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium appearance-none">
-                        <option value="Belum Kawin">Belum Kawin</option>
-                        <option value="Kawin">Kawin</option>
-                        <option value="Cerai Hidup">Cerai Hidup</option>
-                        <option value="Cerai Mati">Cerai Mati</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Tempat Lahir</label>
-                      <input type="text" value={updateForm.tempat_lahir} onChange={e => setUpdateForm({...updateForm, tempat_lahir: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Tanggal Lahir</label>
-                      <input type="date" value={updateForm.tanggal_lahir} onChange={e => setUpdateForm({...updateForm, tanggal_lahir: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Pekerjaan</label>
-                      <input type="text" value={updateForm.pekerjaan} onChange={e => setUpdateForm({...updateForm, pekerjaan: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Status Tinggal</label>
-                      <select value={updateForm.status_tinggal} onChange={e => setUpdateForm({...updateForm, status_tinggal: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium appearance-none">
-                        <option value="Tetap">Warga Tetap</option>
-                        <option value="Kontrak">Kontrak / Kos</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-ivory-100 mt-2">
-                    <label className="block text-xs font-bold text-red-600 uppercase tracking-wider mb-1.5">Kata Sandi Saat Ini *</label>
-                    <div className="relative">
-                      <input type={showPassword ? 'text' : 'password'} required value={updateForm.password} onChange={e => setUpdateForm({...updateForm, password: e.target.value})} placeholder="Verifikasi identitas untuk melanjutkan" className="w-full px-4 py-3 bg-white border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-navy-900 font-medium pr-12 shadow-sm" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-300 hover:text-navy-600 transition-colors">
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <button type="submit" disabled={isSubmitting} className="w-full py-3.5 bg-navy-900 text-white font-bold rounded-xl hover:bg-navy-800 transition flex justify-center gap-2 shadow-md disabled:opacity-70">
-                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Edit3 size={18} />} Kirim Pengajuan Data
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* MODAL 2: MANAJEMEN KELUARGA DIRECT */}
-      <AnimatePresence>
-        {isKeluargaModalOpen && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsKeluargaModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
-              <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50 rounded-t-3xl shrink-0">
-                  <h3 className="font-extrabold text-navy-900 flex items-center gap-2">
-                    {keluargaMode === 'tambah' ? <><Plus size={18} className="text-gold" /> Tambah Anggota</> : <><Edit2 size={18} className="text-gold" /> Edit Anggota</>}
-                  </h3>
-                  <button onClick={() => setIsKeluargaModalOpen(false)} className="p-1.5 bg-white rounded-full hover:bg-ivory-200 transition text-navy-400 shadow-sm border border-ivory-200"><X size={18} /></button>
-              </div>
-              <div className="p-6 overflow-y-auto">
-                <form onSubmit={handleSaveKeluarga} className="space-y-4">
+              <form onSubmit={handleUpdateDataUtama} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
-                    <input type="text" required value={keluargaForm.nama_lengkap} onChange={e => setKeluargaForm({...keluargaForm, nama_lengkap: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Nama Lengkap</label>
+                    <input type="text" required value={updateForm.nama_lengkap} onChange={e => setUpdateForm({...updateForm, nama_lengkap: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Status Hubungan</label>
-                    <select value={keluargaForm.status_hubungan} onChange={e => setKeluargaForm({...keluargaForm, status_hubungan: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium appearance-none">
-                      <option value="Istri">Istri</option>
-                      <option value="Suami">Suami</option>
-                      <option value="Anak">Anak</option>
-                      <option value="Mertua">Mertua</option>
-                      <option value="Lainnya">Lainnya</option>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Nomor WhatsApp</label>
+                    <input type="text" value={updateForm.no_wa} onChange={e => setUpdateForm({...updateForm, no_wa: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">NIK</label>
+                    <input type="number" value={updateForm.nik} onChange={e => setUpdateForm({...updateForm, nik: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Agama</label>
+                    <select value={updateForm.agama} onChange={e => setUpdateForm({...updateForm, agama: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium appearance-none">
+                      <option value="Islam">Islam</option><option value="Kristen">Kristen</option><option value="Katolik">Katolik</option><option value="Hindu">Hindu</option><option value="Buddha">Buddha</option><option value="Konghucu">Konghucu</option>
                     </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">NIK (Opsional)</label>
-                      <input type="number" value={keluargaForm.nik} onChange={e => setKeluargaForm({...keluargaForm, nik: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">No WhatsApp (Opsional)</label>
-                      <input type="number" placeholder="628..." value={keluargaForm.no_wa} onChange={e => setKeluargaForm({...keluargaForm, no_wa: e.target.value})} className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-navy-900 font-medium" />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Status Perkawinan</label>
+                    <select value={updateForm.status_perkawinan} onChange={e => setUpdateForm({...updateForm, status_perkawinan: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium appearance-none">
+                      <option value="Belum Kawin">Belum Kawin</option>
+                      <option value="Kawin">Kawin</option>
+                      <option value="Cerai Hidup">Cerai Hidup</option>
+                      <option value="Cerai Mati">Cerai Mati</option>
+                    </select>
                   </div>
-                  <div className="pt-4 border-t border-ivory-100">
-                    <button type="submit" disabled={isSubmitting} className="w-full py-3.5 bg-navy-900 text-white font-bold rounded-xl hover:bg-navy-800 transition flex justify-center gap-2 shadow-md disabled:opacity-70">
-                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <SaveIcon />} Simpan Data
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Tempat Lahir</label>
+                    <input type="text" value={updateForm.tempat_lahir} onChange={e => setUpdateForm({...updateForm, tempat_lahir: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Tanggal Lahir</label>
+                    <input type="date" value={updateForm.tanggal_lahir} onChange={e => setUpdateForm({...updateForm, tanggal_lahir: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Pekerjaan</label>
+                    <input type="text" value={updateForm.pekerjaan} onChange={e => setUpdateForm({...updateForm, pekerjaan: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Status Tinggal</label>
+                    <select value={updateForm.status_tinggal} onChange={e => setUpdateForm({...updateForm, status_tinggal: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium appearance-none">
+                      <option value="Tetap">Warga Tetap</option>
+                      <option value="Kontrak">Kontrak / Kos</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-navy-100 mt-2">
+                  <label className="block text-xs font-semibold text-red-600 uppercase tracking-wide mb-1.5">Kata Sandi Saat Ini *</label>
+                  <div className="relative">
+                    <input type={showPassword ? 'text' : 'password'} required value={updateForm.password} onChange={e => setUpdateForm({...updateForm, password: e.target.value})} placeholder="Verifikasi identitas untuk melanjutkan" className="w-full px-4 py-2.5 bg-white border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-navy-900 font-medium pr-12" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-300 hover:text-navy-600 transition-colors">
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
-                </form>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                </div>
+                <div className="pt-2">
+                  <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-navy-900 text-white font-semibold rounded-lg hover:bg-navy-800 transition flex justify-center gap-2 disabled:opacity-70">
+                    {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Edit3 size={18} />} Kirim Pengajuan Data
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* MODAL 2: MANAJEMEN KELUARGA */}
+      {isKeluargaModalOpen && (
+        <>
+          <div onClick={() => setIsKeluargaModalOpen(false)} className="fixed inset-0 bg-navy-900/60 z-50" />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-surface rounded-xl shadow-card border border-navy-100 z-50 flex flex-col max-h-[90vh]">
+            <div className="px-6 py-5 border-b border-navy-100 flex justify-between items-center shrink-0">
+              <h3 className="font-semibold text-navy-900 flex items-center gap-2">
+                {keluargaMode === 'tambah' ? <><Plus size={18} className="text-accent" /> Tambah Anggota</> : <><Edit2 size={18} className="text-accent" /> Edit Anggota</>}
+              </h3>
+              <button onClick={() => setIsKeluargaModalOpen(false)} className="p-1.5 bg-white rounded-md hover:bg-navy-50 transition text-navy-400 border border-navy-200"><X size={18} /></button>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              <form onSubmit={handleSaveKeluarga} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Nama Lengkap</label>
+                  <input type="text" required value={keluargaForm.nama_lengkap} onChange={e => setKeluargaForm({...keluargaForm, nama_lengkap: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">Status Hubungan</label>
+                  <select value={keluargaForm.status_hubungan} onChange={e => setKeluargaForm({...keluargaForm, status_hubungan: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium appearance-none">
+                    <option value="Istri">Istri</option>
+                    <option value="Suami">Suami</option>
+                    <option value="Anak">Anak</option>
+                    <option value="Mertua">Mertua</option>
+                    <option value="Lainnya">Lainnya</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">NIK (Opsional)</label>
+                    <input type="number" value={keluargaForm.nik} onChange={e => setKeluargaForm({...keluargaForm, nik: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy-600 uppercase tracking-wide mb-1.5">No WhatsApp (Opsional)</label>
+                    <input type="number" placeholder="628..." value={keluargaForm.no_wa} onChange={e => setKeluargaForm({...keluargaForm, no_wa: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg focus:ring-2 focus:ring-accent outline-none text-navy-900 font-medium" />
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-navy-100">
+                  <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-navy-900 text-white font-semibold rounded-lg hover:bg-navy-800 transition flex justify-center gap-2 disabled:opacity-70">
+                    {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <SaveIcon />} Simpan Data
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* MODAL SWITCH KE ADMIN */}
-      <AnimatePresence>
-        {isAdminSwitchOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAdminSwitchOpen(false)} className="absolute inset-0 bg-navy-900/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
-              <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50">
-                  <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><ShieldAlert size={18} className="text-gold"/> Otorisasi Admin</h3>
-                  <button onClick={() => setIsAdminSwitchOpen(false)} className="p-1.5 bg-white rounded-full text-navy-400 border border-ivory-200"><X size={18} /></button>
-              </div>
-              <div className="p-6">
-                <p className="text-sm font-medium text-navy-500 mb-5 leading-relaxed">Masukkan kata sandi untuk kembali ke Dasbor Admin.</p>
-                {switchError && <p className="mb-4 text-xs font-bold text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">{switchError}</p>}
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  setIsSwitching(true);
-                  setSwitchError('');
-                  try {
-                    await verifyRoleSwitch(switchPassword);
-                    window.location.href = '/admin';
-                  } catch (err: any) {
-                    setSwitchError(err.message);
-                  } finally {
-                    setIsSwitching(false);
-                  }
-                }} className="space-y-4">
-                  <div className="relative">
-                    <input type={showSwitchPassword ? 'text' : 'password'} required value={switchPassword} onChange={e => setSwitchPassword(e.target.value)} placeholder="Kata Sandi..." className="w-full px-4 py-3 bg-ivory-50 border border-ivory-300 rounded-xl outline-none text-navy-900 font-medium pr-12" />
-                    <button type="button" onClick={() => setShowSwitchPassword(!showSwitchPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-300 hover:text-navy-600"><Eye size={20} /></button>
-                  </div>
-                  <button type="submit" disabled={isSwitching} className="w-full py-3.5 bg-gold text-navy-900 font-bold rounded-xl hover:bg-gold-light transition flex justify-center items-center gap-2 shadow-md">
-                    {isSwitching ? <Loader2 size={18} className="animate-spin"/> : 'Kembali ke Admin'}
-                  </button>
-                </form>
-              </div>
-            </motion.div>
+      {isAdminSwitchOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div onClick={() => setIsAdminSwitchOpen(false)} className="absolute inset-0 bg-navy-900/60" />
+          <div className="relative w-full max-w-sm bg-surface rounded-xl shadow-card border border-navy-100 flex flex-col overflow-hidden">
+            <div className="px-6 py-5 border-b border-navy-100 flex justify-between items-center">
+                <h3 className="font-semibold text-navy-900 flex items-center gap-2"><ShieldAlert size={18} className="text-accent"/> Otorisasi Admin</h3>
+                <button onClick={() => setIsAdminSwitchOpen(false)} className="p-1.5 bg-white rounded-md text-navy-400 border border-navy-200"><X size={18} /></button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-navy-500 mb-5 leading-relaxed">Masukkan kata sandi untuk kembali ke Dasbor Admin.</p>
+              {switchError && <p className="mb-4 text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">{switchError}</p>}
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setIsSwitching(true);
+                setSwitchError('');
+                try {
+                  await verifyRoleSwitch(switchPassword);
+                  window.location.href = '/admin';
+                } catch (err: any) {
+                  setSwitchError(err.message);
+                } finally {
+                  setIsSwitching(false);
+                }
+              }} className="space-y-4">
+                <div className="relative">
+                  <input type={showSwitchPassword ? 'text' : 'password'} required value={switchPassword} onChange={e => setSwitchPassword(e.target.value)} placeholder="Kata Sandi..." className="w-full px-4 py-2.5 bg-white border border-navy-200 rounded-lg outline-none text-navy-900 font-medium pr-12" />
+                  <button type="button" onClick={() => setShowSwitchPassword(!showSwitchPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-300 hover:text-navy-600"><Eye size={20} /></button>
+                </div>
+                <button type="submit" disabled={isSwitching} className="w-full py-3 bg-accent text-navy-900 font-semibold rounded-lg hover:bg-accent/90 transition flex justify-center items-center gap-2">
+                  {isSwitching ? <Loader2 size={18} className="animate-spin"/> : 'Kembali ke Admin'}
+                </button>
+              </form>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
-    </motion.div>
+    </div>
   );
 }
 

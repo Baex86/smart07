@@ -2,51 +2,49 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Wallet, FileText, User, LogOut } from 'lucide-react';
-import { logoutUser } from '@/app/actions/auth';
+import { Home, Wallet, FileText, User, LayoutGrid, Store } from 'lucide-react';
 
 export default function BottomNavWarga() {
   const pathname = usePathname();
 
   const menuItems = [
     { name: 'Beranda', icon: Home, href: '/dashboard' },
-    { name: 'Iuran', icon: Wallet, href: '/iuran' },
+    { name: 'Keuangan', icon: Wallet, href: '/keuangan' },
     { name: 'Surat', icon: FileText, href: '/surat' },
+    { name: 'Layanan', icon: LayoutGrid, href: '/layanan' },
+    { name: 'Usaha', icon: Store, href: '/badan-usaha' },
     { name: 'Profil', icon: User, href: '/profil' },
   ];
 
-  const handleLogout = async () => {
-    if (!confirm('Yakin ingin keluar?')) return;
-    await logoutUser();
-    window.location.href = '/';
-  };
-
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 w-full bg-ivory-50 border-t border-ivory-300 shadow-[0_-4px_20px_rgb(0,0,0,0.02)] z-50 pb-safe">
+    <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-navy-100 shadow-[0_-4px_16px_rgb(11,18,32,0.06)] z-50 pb-safe">
       <div className="flex justify-around items-center h-16 px-1">
         {menuItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
           return (
-            <Link key={item.name} href={item.href} className="flex-1 flex flex-col items-center justify-center gap-1">
-              <div className={`p-1.5 rounded-full transition-colors duration-300 ${isActive ? 'bg-navy-100 text-navy-900' : 'text-navy-400'}`}>
-                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+            <Link
+              key={item.name}
+              href={item.href}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 min-w-0"
+            >
+              <div
+                className={`p-1 rounded-md transition-colors duration-150 ${
+                  isActive ? 'bg-accent/15 text-navy-900' : 'text-navy-400'
+                }`}
+              >
+                <Icon size={21} strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-navy-900 font-bold' : 'text-navy-400'}`}>
+              <span
+                className={`text-[10px] leading-none truncate max-w-full transition-colors ${
+                  isActive ? 'text-navy-900 font-semibold' : 'text-navy-400 font-medium'
+                }`}
+              >
                 {item.name}
               </span>
             </Link>
           );
         })}
-        {/* Tombol Logout Khusus HP Warga */}
-        <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center gap-1">
-          <div className="p-1.5 rounded-full transition-colors duration-300 text-red-500 hover:bg-red-50">
-            <LogOut size={22} strokeWidth={2} />
-          </div>
-          <span className="text-[10px] font-medium transition-colors text-red-500 font-bold">
-            Keluar
-          </span>
-        </button>
       </div>
     </nav>
   );

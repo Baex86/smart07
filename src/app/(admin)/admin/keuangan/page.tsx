@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Loader2, Plus, TrendingUp, TrendingDown, Wallet, X, Calendar, ArrowUpRight, ArrowDownRight, ChevronDown, CheckCircle2, ShieldAlert, ListFilter, Search, Settings } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { getKeuanganData, catatArusKasManual, prosesVerifikasiIuran, tambahMasterIuran, generateTagihanMassal } from '@/app/actions/keuangan';
 
 type TabType = 'buku_besar' | 'verifikasi' | 'pantau' | 'master';
@@ -167,9 +166,9 @@ export default function KeuanganAdminPage() {
         ))}
       </div>
 
-      <AnimatePresence mode="wait">
+      <>
         {activeTab === 'buku_besar' && (
-          <motion.div key="buku_besar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+          <div key="buku_besar" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white p-6 rounded-2xl border border-ivory-300 shadow-sm flex flex-col justify-between relative overflow-hidden">
                 <div className="relative z-10">
@@ -218,11 +217,11 @@ export default function KeuanganAdminPage() {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {activeTab === 'verifikasi' && (
-          <motion.div key="verifikasi" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+          <div key="verifikasi" className="space-y-4">
             {antreanIuran.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 bg-white border border-ivory-300 rounded-2xl">
                 <CheckCircle2 size={40} className="text-emerald-400 mb-3" />
@@ -251,11 +250,11 @@ export default function KeuanganAdminPage() {
                 </div>
               ))
             )}
-          </motion.div>
+          </div>
         )}
 
         {activeTab === 'pantau' && (
-          <motion.div key="pantau" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+          <div key="pantau" className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-300" size={18} />
@@ -312,11 +311,11 @@ export default function KeuanganAdminPage() {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {activeTab === 'master' && (
-          <motion.div key="master" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+          <div key="master" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {masterIuran.length === 0 ? (
                 <div className="col-span-full py-16 text-center bg-white border-2 border-dashed border-ivory-300 rounded-2xl">
@@ -345,15 +344,15 @@ export default function KeuanganAdminPage() {
                 ))
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
 
-      <AnimatePresence>
+      <>
         {isModalOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+            <div onClick={() => setIsModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
+            <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
               <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50 shrink-0 rounded-t-3xl">
                 <h2 className="text-xl font-bold text-navy-900">Catat Transaksi</h2>
                 <button onClick={() => setIsModalOpen(false)} className="p-2 bg-white rounded-full hover:bg-ivory-200 transition text-navy-400"><X size={18} /></button>
@@ -392,16 +391,16 @@ export default function KeuanganAdminPage() {
                   </button>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
+      </>
 
-      <AnimatePresence>
+      <>
         {isMasterModalOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMasterModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+            <div onClick={() => setIsMasterModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
+            <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
               <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50 shrink-0 rounded-t-3xl">
                 <h2 className="text-xl font-bold text-navy-900">Master Tarif Baru</h2>
                 <button onClick={() => setIsMasterModalOpen(false)} className="p-2 bg-white rounded-full hover:bg-ivory-200 transition text-navy-400"><X size={18} /></button>
@@ -440,10 +439,10 @@ export default function KeuanganAdminPage() {
                   </div>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

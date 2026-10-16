@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Eye, EyeOff, Loader2, KeyRound, X, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { setAuthCookies, requestResetPassword } from './actions/auth';
 import Link from 'next/link';
 
@@ -75,10 +74,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-ivory-200">
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      <div
         className="w-full max-w-md bg-ivory-50 p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-ivory-300"
       >
         <div className="text-center mb-10">
@@ -89,9 +85,9 @@ export default function LoginPage() {
         </div>
 
         {errorMessage && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 p-4 bg-red-50/50 text-red-600 text-sm rounded-lg border border-red-100 text-center">
+          <div className="mb-6 p-4 bg-red-50/50 text-red-600 text-sm rounded-lg border border-red-100 text-center">
             {errorMessage}
-          </motion.div>
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -127,14 +123,14 @@ export default function LoginPage() {
           Belum terdaftar sebagai warga?{' '}
           <Link href="/daftar" className="text-gold font-bold hover:text-gold-light transition-colors">Registrasi</Link>
         </div>
-      </motion.div>
+      </div>
 
       {/* MODAL LUPA SANDI */}
-      <AnimatePresence>
+      <>
         {isResetModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsResetModalOpen(false)} className="absolute inset-0 bg-navy-900/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div onClick={() => setIsResetModalOpen(false)} className="absolute inset-0 bg-navy-900/80 backdrop-blur-sm" />
+            <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
               <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50">
                   <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><KeyRound size={18} className="text-gold"/> Lupa Kata Sandi</h3>
                   <button onClick={() => {setIsResetModalOpen(false); setResetStatus({show:false, success:false, message:''})}} className="p-1.5 bg-white rounded-full text-navy-400 border border-ivory-200"><X size={18} /></button>
@@ -163,10 +159,10 @@ export default function LoginPage() {
                   </button>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

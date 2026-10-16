@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { FileText, Settings, Loader2, CheckCircle2, XCircle, Clock, Printer, Plus, X, Edit2, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { getSemuaLayananAdmin, tambahMasterSurat, updateMasterSurat, hapusMasterSurat, updateStatusLayanan } from '@/app/actions/layanan';
 
 const DEFAULT_HTML_TEMPLATE = `<div style="text-align: center; border-bottom: 3px solid black; padding-bottom: 10px; margin-bottom: 20px;">
@@ -30,7 +29,7 @@ const DEFAULT_HTML_TEMPLATE = `<div style="text-align: center; border-bottom: 3p
 <div style="width: 300px; margin-left: auto; text-align: center; font-size: 14px;">
   <p style="margin-bottom: 5px;">Mojokerto, [TANGGAL_HARI_INI]</p>
   <p style="margin-bottom: 70px;">Ketua RT 07 RW 06</p>
-  <p style="font-weight: bold; text-decoration: underline;">BAYU AGUS NURRUDIN</p>
+  <p style="font-weight: bold; text-decoration: underline;">Masrur, ST</p>
 </div>`;
 
 export default function SuratAdminPage() {
@@ -72,8 +71,24 @@ export default function SuratAdminPage() {
     setKeteranganAdmin('');
   };
 
+  const namaJenisSurat = (val?: string) => {
+    if (!val) return '-';
+    return data.masterSurat.find(m => m.id === val)?.jenis_surat
+      || data.masterSurat.find(m => m.jenis_surat === val)?.jenis_surat
+      || val;
+  };
+
+  const formatTanggalKehilangan = (v?: string) => {
+    if (!v) return '-';
+    const d = new Date(v + 'T00:00:00');
+    if (isNaN(d.getTime())) return v;
+    return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+
   const eksekusiCetakPDF = async () => {
-    const template = data.masterSurat.find(m => m.jenis_surat === selectedSurat.jenis_surat);
+    const template = data.masterSurat.find(m => m.id === selectedSurat.jenis_surat)
+      || data.masterSurat.find(m => m.jenis_surat === selectedSurat.jenis_surat);
     if (!template) return alert('Master Template tidak ditemukan! Buat templatenya dulu di tab Master.');
 
     const warga = selectedSurat.buku_induk;
@@ -82,7 +97,7 @@ export default function SuratAdminPage() {
     const tglHariIni = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
     let renderedHtml = template.konten_html
-      .replace(/\[JENIS_SURAT\]/g, selectedSurat.jenis_surat.toUpperCase())
+      .replace(/\[JENIS_SURAT\]/g, (template.jenis_surat || selectedSurat.jenis_surat).toUpperCase())
       .replace(/\[NAMA\]/g, warga.nama_lengkap || '-')
       .replace(/\[NIK\]/g, warga.nik || '-')
       .replace(/\[JENIS_KELAMIN\]/g, warga.jenis_kelamin || '-')
@@ -91,6 +106,9 @@ export default function SuratAdminPage() {
       .replace(/\[AGAMA\]/g, warga.agama || '-')
       .replace(/\[BLOK\]/g, warga.nomor_rumah || '-')
       .replace(/\[KEPERLUAN\]/g, selectedSurat.keperluan || '-')
+      .replace(/\[BARANG_ATAU_DOKUMEN_YANG_HILANG\]/g, selectedSurat.jenis_barang || '-')
+      .replace(/\[HARI_DAN_TANGGAL_KEHILANGAN\]/g, formatTanggalKehilangan(selectedSurat.waktu_kehilangan))
+      .replace(/\[PERKIRAAN_LOKASI_KEHILANGAN\]/g, selectedSurat.lokasi_kehilangan || '-')
       .replace(/\[KETERANGAN_ADMIN\]/g, keteranganAdmin || '-')
       .replace(/\[TANGGAL_HARI_INI\]/g, tglHariIni);
 
@@ -189,7 +207,7 @@ export default function SuratAdminPage() {
 
         <div className="flex gap-2 border-b border-ivory-300 pb-px">
           <button onClick={() => setActiveSubTab('antrean')} className={`flex items-center gap-2 px-5 py-3 rounded-t-xl font-bold text-sm transition-all border-b-2 ${activeSubTab === 'antrean' ? 'border-navy-900 text-navy-900' : 'border-transparent text-slate-500'}`}>
-            <FileText size={16} /> Antrean Pengajuan ({data.surat.filter(s => s.status === 'menunggu').length})
+            <FileText size={16} /> Antrean Pengajuan ({data.surat.filter(s => s.status === 'menunggu' || s.status === 'diproses').length})
           </button>
           <button onClick={() => setActiveSubTab('master')} className={`flex items-center gap-2 px-5 py-3 rounded-t-xl font-bold text-sm transition-all border-b-2 ${activeSubTab === 'master' ? 'border-navy-900 text-navy-900' : 'border-transparent text-slate-500'}`}>
             <Settings size={16} /> Master Template HTML
@@ -207,13 +225,18 @@ export default function SuratAdminPage() {
                 <div key={item.id} className="bg-white p-5 rounded-2xl border border-ivory-300 shadow-sm flex flex-col md:flex-row gap-5 items-start md:items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1.5">{getStatusBadge(item.status)} <span className="text-[10px] font-bold text-slate-400">Blok {item.buku_induk?.nomor_rumah}</span></div>
-                    <h3 className="font-bold text-navy-900 text-lg">{item.jenis_surat} <span className="text-sm font-medium text-slate-500">dari {item.buku_induk?.nama_lengkap}</span></h3>
+                    <h3 className="font-bold text-navy-900 text-lg">{namaJenisSurat(item.jenis_surat)} <span className="text-sm font-medium text-slate-500">dari {item.buku_induk?.nama_lengkap}</span></h3>
                     <p className="text-sm text-slate-600 mt-1">Keperluan: <span className="font-semibold text-navy-900">{item.keperluan}</span></p>
+                    {item.jenis_barang && (
+                      <p className="text-sm text-slate-600 mt-1">Barang Hilang: <span className="font-semibold text-navy-900">{item.jenis_barang}</span> · Lokasi: <span className="font-semibold text-navy-900">{item.lokasi_kehilangan || '-'}</span></p>
+                    )}
                   </div>
                   <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
-                    {item.status === 'menunggu' && (
+                    {(item.status === 'menunggu' || item.status === 'diproses') && (
                       <>
-                        <button onClick={() => handleUpdateStatus('surat_pengantar', item.id, 'ditolak')} disabled={isProcessing === item.id} className="px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 transition">Tolak</button>
+                        {item.status === 'menunggu' && (
+                          <button onClick={() => handleUpdateStatus('surat_pengantar', item.id, 'ditolak')} disabled={isProcessing === item.id} className="px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 transition">Tolak</button>
+                        )}
                         <button onClick={() => bukaModalCetak(item)} className="px-4 py-2 bg-navy-900 text-white text-sm font-bold rounded-xl hover:bg-navy-800 transition flex items-center gap-2 shadow-md"><Printer size={16}/> Proses & Cetak</button>
                       </>
                     )}
@@ -254,11 +277,11 @@ export default function SuratAdminPage() {
         )}
 
         {/* Modal Cetak Surat */}
-        <AnimatePresence>
+        <>
           {selectedSurat && (
             <>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedSurat(null)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-3xl shadow-2xl z-50 flex flex-col overflow-hidden">
+              <div onClick={() => setSelectedSurat(null)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
+              <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-3xl shadow-2xl z-50 flex flex-col overflow-hidden">
                 <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50">
                   <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><Printer size={18} className="text-emerald-600"/> Generate Surat PDF</h3>
                   <button onClick={() => setSelectedSurat(null)} className="p-1.5 bg-white rounded-full text-navy-400 border border-ivory-200"><X size={18} /></button>
@@ -267,7 +290,15 @@ export default function SuratAdminPage() {
                   <div className="mb-4 space-y-1">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pemohon</p>
                     <p className="font-bold text-navy-900 text-lg">{selectedSurat.buku_induk?.nama_lengkap}</p>
+                    <p className="text-sm font-medium text-emerald-600">Jenis Surat: {namaJenisSurat(selectedSurat.jenis_surat)}</p>
                     <p className="text-sm font-medium text-slate-600">Keperluan: {selectedSurat.keperluan}</p>
+                    {selectedSurat.jenis_barang && (
+                      <div className="text-sm font-medium text-slate-600 space-y-0.5 mt-1">
+                        <p>Barang Hilang: {selectedSurat.jenis_barang}</p>
+                        <p>Waktu Kehilangan: {formatTanggalKehilangan(selectedSurat.waktu_kehilangan)}</p>
+                        <p>Lokasi Kehilangan: {selectedSurat.lokasi_kehilangan || '-'}</p>
+                      </div>
+                    )}
                   </div>
                   <div className="mb-6">
                     <label className="block text-xs font-bold text-navy-500 uppercase tracking-wider mb-1.5">Keterangan Tambahan Admin (Opsional)</label>
@@ -277,17 +308,17 @@ export default function SuratAdminPage() {
                     <Printer size={18} /> Rilis Surat & Buka Jendela Cetak PDF
                   </button>
                 </div>
-              </motion.div>
+              </div>
             </>
           )}
-        </AnimatePresence>
+        </>
 
         {/* Modal Studio Editor Template Surat (WYSIWYG) */}
-        <AnimatePresence>
+        <>
           {isMasterModalOpen && (
             <>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMasterModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[95vh] overflow-hidden">
+              <div onClick={() => setIsMasterModalOpen(false)} className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-50" />
+              <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-3xl shadow-2xl z-50 flex flex-col max-h-[95vh] overflow-hidden">
                 <div className="px-6 py-5 border-b border-ivory-200 flex justify-between items-center bg-ivory-50 shrink-0">
                   <h3 className="font-extrabold text-navy-900 flex items-center gap-2"><Settings size={18} className="text-purple-600"/> Studio Editor Template</h3>
                   <button onClick={() => setIsMasterModalOpen(false)} className="p-1.5 bg-white rounded-full text-navy-400 border border-ivory-200"><X size={18} /></button>
@@ -330,6 +361,9 @@ export default function SuratAdminPage() {
                             <option value="[PEKERJAAN]">Pekerjaan</option>
                             <option value="[BLOK]">Nomor Blok Rumah</option>
                             <option value="[KEPERLUAN]">Keperluan Pemohon</option>
+                            <option value="[BARANG_ATAU_DOKUMEN_YANG_HILANG]">Jenis Barang/Dokumen (Kehilangan)</option>
+                            <option value="[HARI_DAN_TANGGAL_KEHILANGAN]">Waktu Kehilangan</option>
+                            <option value="[PERKIRAAN_LOKASI_KEHILANGAN]">Lokasi Kehilangan</option>
                             <option value="[KETERANGAN_ADMIN]">Keterangan Admin</option>
                             <option value="[TANGGAL_HARI_INI]">Tanggal Surat (Otomatis)</option>
                           </select>
@@ -353,10 +387,10 @@ export default function SuratAdminPage() {
                     </div>
                   </form>
                 </div>
-              </motion.div>
+              </div>
             </>
           )}
-        </AnimatePresence>
+        </>
       </div>
 
       {/* RENDER HTML FINAL UNTUK DI PRINT OS (DIBUNGKUS ID ISOLASI) */}

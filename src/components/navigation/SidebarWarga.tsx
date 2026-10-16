@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Wallet, FileText, User, LogOut, MessageSquareWarning, Lightbulb } from 'lucide-react';
+import { Home, Wallet, FileText, User, LogOut, LayoutGrid, Store } from 'lucide-react';
 import { logoutUser } from '@/app/actions/auth';
 
 export default function SidebarWarga() {
@@ -10,10 +10,10 @@ export default function SidebarWarga() {
 
   const menuItems = [
     { name: 'Beranda', icon: Home, href: '/dashboard' },
-    { name: 'Iuran Kas', icon: Wallet, href: '/iuran' },
+    { name: 'Keuangan', icon: Wallet, href: '/keuangan' },
     { name: 'Surat Pengantar', icon: FileText, href: '/surat' },
-    { name: 'Aduan Warga', icon: MessageSquareWarning, href: '/aduan' },
-    { name: 'Usulan Warga', icon: Lightbulb, href: '/usulan' },
+    { name: 'Layanan', icon: LayoutGrid, href: '/layanan' },
+    { name: 'Badan Usaha', icon: Store, href: '/badan-usaha' },
     { name: 'Profil', icon: User, href: '/profil' },
   ];
 
@@ -23,42 +23,61 @@ export default function SidebarWarga() {
   };
 
   return (
-    <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-ivory-50 border-r border-ivory-300 shadow-sm z-50">
-      <div className="p-6 mb-4 border-b border-ivory-300">
-        <h2 className="text-3xl font-extrabold text-navy-900 tracking-tighter">SMART O7</h2>
-        <p className="text-[10px] font-bold uppercase text-navy-500 mt-2 leading-relaxed text-wrap">
-          Sistem RT pintar RT 07 RW 06 Griya Permata Meri, Mojokerto
-        </p>
+    <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 bg-navy-900 text-navy-100 z-50">
+      {/* Brand */}
+      <div className="px-6 pt-7 pb-6 border-b border-white/10">
+        <div className="flex items-center gap-2.5">
+          <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center shrink-0">
+            <span className="font-display font-bold text-navy-900 text-sm">07</span>
+          </div>
+          <div>
+            <h2 className="font-display text-lg font-bold text-white leading-none tracking-tight">
+              SMART<span className="text-accent"> 07</span>
+            </h2>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-navy-300 mt-1.5">
+              RT 07 · RW 06 · GPM
+            </p>
+          </div>
+        </div>
       </div>
-      
-      <nav className="flex-1 px-4 space-y-2 overflow-y-auto no-scrollbar">
+
+      {/* Menu */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar">
         {menuItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
 
           return (
             <Link key={item.name} href={item.href}>
               <div
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-colors duration-150 font-medium text-sm ${
                   isActive
-                    ? 'bg-navy-800 text-ivory-50 shadow-md shadow-navy-900/10'
-                    : 'text-navy-600 hover:bg-ivory-200 hover:text-navy-900'
+                    ? 'bg-white/10 text-white'
+                    : 'text-navy-300 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                <Icon
+                  size={19}
+                  strokeWidth={2}
+                  className={isActive ? 'text-accent' : ''}
+                />
                 <span>{item.name}</span>
+                {isActive && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent" />
+                )}
               </div>
             </Link>
           );
         })}
       </nav>
-      
-      <div className="p-4 border-t border-ivory-300 shrink-0">
-        <button 
+
+      {/* Footer / Logout */}
+      <div className="p-3 border-t border-white/10 shrink-0">
+        <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-600 hover:bg-red-50 transition-colors font-medium"
+          className="flex items-center gap-3 px-3.5 py-2.5 w-full rounded-lg text-navy-300 hover:bg-white/5 hover:text-white transition-colors font-medium text-sm"
         >
-          <LogOut size={20} />
+          <LogOut size={19} />
           <span>Keluar</span>
         </button>
       </div>
